@@ -28,10 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    final vpn  = context.read<VpnProvider>();
+    final auth = context.read<AuthProvider>();
     Future.microtask(() async {
-      final vpn  = context.read<VpnProvider>();
-      final auth = context.read<AuthProvider>();
+      if (!mounted) return;
       await vpn.loadServers();
+      if (!mounted) return;
       await vpn.checkAutoConnect(isPremium: auth.user?.isPremium ?? false);
       // Тихая пред-регистрация — ускоряет первое подключение (цель — 5 секунд)
       if (!auth.isAuth) {
@@ -131,10 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             onModeChange: (m) => setState(() => _mode = m),
                             onServerTap: () async {
                               final auth = context.read<AuthProvider>();
-                              if (!(auth.user?.isPremium ?? false) && mounted) {
+                              if (!(auth.user?.isPremium ?? false) && context.mounted) {
                                 await _showPaymentSheet(context);
                               }
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               final s = await Navigator.push<VpnServer>(
                                 context,
                                 MaterialPageRoute(
@@ -823,7 +825,7 @@ class _SettingsTabState extends State<_SettingsTab> {
             ? '${deviceId.substring(0, 4)}...${deviceId.substring(deviceId.length - 4)}'
             : deviceId;
         final expiryStr = user?.trialEndsAt != null
-            ? DateFormat('d MMM yyyy', 'ru').format(user!.trialEndsAt!)
+            ? DateFormat('d MMM yyyy, HH:mm', 'ru').format(user!.trialEndsAt!)
             : '—';
         final badgeLabel = (user?.isPremium ?? false) ? 'PREMIUM' : 'TRIAL';
 

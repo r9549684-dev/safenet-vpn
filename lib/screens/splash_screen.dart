@@ -45,11 +45,11 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigate() async {
     if (_navigating) return;
     _navigating = true;
+    final auth = context.read<AuthProvider>();
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
 
     final onboarded = await SecureStorage.isOnboarded();
-    final auth = context.read<AuthProvider>();
 
     while (auth.state == AuthState.initial) {
       await Future.delayed(const Duration(milliseconds: 100));

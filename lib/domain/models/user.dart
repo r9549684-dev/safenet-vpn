@@ -24,9 +24,9 @@ class User {
   factory User.fromJson(Map<String, dynamic> j) => User(
     id:             j['id'],
     deviceId:       j['device_id'],
-    country:        j['country'],
-    language:       j['language'],
-    referralCode:   j['referral_code'],
+    country:        j['country'] ?? 'IR',
+    language:       j['language'] ?? 'ru',
+    referralCode:   j['referral_code'] ?? '',
     isPremium:      j['is_premium'] ?? false,
     trialEndsAt:    j['trial_ends_at'] != null ? DateTime.parse(j['trial_ends_at']) : null,
     computeCredits: j['compute_credits'] ?? 0,
