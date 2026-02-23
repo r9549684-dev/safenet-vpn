@@ -235,44 +235,205 @@ class _ReferralCodeCard extends StatelessWidget {
   );
 }
 
-// ── Progress Card (для не-партнёров) ─────────────────────────────────────────
+// ── Блок 1: ВПН за 50% цены (1–10 рефералов) ────────────────────────────
 
-class _ProgressCard extends StatelessWidget {
-  const _ProgressCard();
+class _DiscountCard extends StatelessWidget {
+  const _DiscountCard();
 
   @override
-  Widget build(BuildContext context) => _GlassCard(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(colors: [
+        const Color(0xFFF59E0B).withOpacity(0.15),
+        const Color(0xFFF97316).withOpacity(0.08),
+      ]),
+      border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35)),
+      borderRadius: BorderRadius.circular(20),
+    ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('💰 Как зарабатывать',
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+      Row(children: const [
+        Text('🎁', style: TextStyle(fontSize: 22)),
+        SizedBox(width: 8),
+        Expanded(child: Text('ВПН за 50% цены',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900,
+            color: AppTheme.textPrimary))),
+      ]),
       const SizedBox(height: 12),
-      _ScaleRow(range: 'Обычный юзер', reward: '50% скидка на следующую оплату за каждого реферала'),
-      const Divider(color: AppTheme.border, height: 20),
-      _ScaleRow(range: '1–99 рефералов', reward: '\$1 фикс за каждого'),
-      _ScaleRow(range: '100–500', reward: '10% от суммы оплаты ежемесячно'),
-      _ScaleRow(range: '501–1000', reward: '20% от суммы оплаты ежемесячно'),
-      _ScaleRow(range: '1000+', reward: '25% от суммы оплаты ежемесячно'),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.2)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+          Text('👥 Подключи друга',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800,
+              color: Color(0xFFF59E0B))),
+          SizedBox(height: 8),
+          Text(
+            'Приведи от 1 до 10 друзей — получи '
+            'скидку 50% на следующую оплату '
+            'за каждого платящего реферала.',
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, height: 1.5)),
+          SizedBox(height: 6),
+          Text('1 — 10 друзей = 50% скидка за каждого',
+            style: TextStyle(fontSize: 10, color: AppTheme.textMuted)),
+        ]),
+      ),
+      const SizedBox(height: 10),
+      Row(children: const [
+        Icon(Icons.info_outline_rounded, size: 13, color: AppTheme.textMuted),
+        SizedBox(width: 5),
+        Expanded(child: Text(
+          'Друг сканирует QR или вводит код при установке — скидка применяется автоматически',
+          style: TextStyle(fontSize: 10, color: AppTheme.textMuted))),
+      ]),
     ]),
   );
 }
 
-class _ScaleRow extends StatelessWidget {
-  final String range, reward;
-  const _ScaleRow({required this.range, required this.reward});
+// ── Блок 2: Стать партнёром (11+ рефералов) ─────────────────────────────
+
+class _PartnerTiersCard extends StatelessWidget {
+  const _PartnerTiersCard();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(colors: [
+        AppTheme.primary.withOpacity(0.12),
+        AppTheme.success.withOpacity(0.06),
+      ]),
+      border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: const [
+        Text('🚀', style: TextStyle(fontSize: 22)),
+        SizedBox(width: 8),
+        Expanded(child: Text('Стать партнёром',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900,
+            color: AppTheme.textPrimary))),
+      ]),
+      const SizedBox(height: 4),
+      const Text('От 11 платящих рефералов — реальный доход на TON',
+        style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+      const SizedBox(height: 14),
+      Row(children: const [
+        SizedBox(width: 88, child: Text('Рефералов',
+          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
+            color: AppTheme.textMuted, letterSpacing: 1))),
+        Expanded(child: Text('При 1-й оплате',
+          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
+            color: AppTheme.textMuted, letterSpacing: 1))),
+        Text('Ежемесячно',
+          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700,
+            color: AppTheme.textMuted, letterSpacing: 1)),
+      ]),
+      const Divider(color: AppTheme.border, height: 10),
+      const _TierRow(range: '11 – 100',    fix: '\$1.5 / чел', recurring: '—'),
+      const Divider(color: AppTheme.border, height: 8),
+      const _TierRow(range: '101 – 500',   fix: '\$1.5 / чел', recurring: '+10%'),
+      const Divider(color: AppTheme.border, height: 8),
+      const _TierRow(range: '501 – 1000',  fix: '\$1.5 / чел', recurring: '+15%'),
+      const Divider(color: AppTheme.border, height: 8),
+      const _TierRow(range: '1001 – 1500', fix: '\$1.5 / чел', recurring: '+20%'),
+      const Divider(color: AppTheme.border, height: 8),
+      const _TierRow(range: '1500 +',      fix: '\$1.5 / чел', recurring: '+25%'),
+      const SizedBox(height: 12),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppTheme.bg,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Text(
+          '\$1.5 — единовременно при первой оплате реферала\n'
+          '% — ежемесячно от каждой последующей оплаты',
+          style: TextStyle(fontSize: 10, color: AppTheme.textMuted, height: 1.6)),
+      ),
+    ]),
+  );
+}
+
+class _TierRow extends StatelessWidget {
+  final String range, fix, recurring;
+  const _TierRow({required this.range, required this.fix, required this.recurring});
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(
-        width: 90,
+    padding: const EdgeInsets.symmetric(vertical: 1),
+    child: Row(children: [
+      SizedBox(width: 88,
         child: Text(range, style: const TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primary)),
-      ),
-      Expanded(child: Text(reward,
-        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary))),
+          fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primary))),
+      Expanded(child: Text(fix, style: const TextStyle(
+        fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary))),
+      Text(recurring, style: TextStyle(
+        fontSize: 11, fontWeight: FontWeight.w800,
+        color: recurring == '—' ? AppTheme.textMuted : AppTheme.success)),
     ]),
   );
+}
+
+// ── QR Card ─────────────────────────────────────────────────────────────────
+
+class _QrCard extends StatelessWidget {
+  final String code;
+  const _QrCard({required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    if (code.isEmpty) return const SizedBox.shrink();
+    final url = 'https://safenetvpn.com/dl?ref=' + code;
+    return _GlassCard(
+      child: Column(children: [
+        const Text('📲 QR-код для друзей',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary)),
+        const SizedBox(height: 4),
+        const Text('Отсканировал — скачал — твой код уже привязан',
+          style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+          textAlign: TextAlign.center),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: QrImageView(
+            data: url,
+            version: QrVersions.auto,
+            size: 180,
+            backgroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: url));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ссылка скопирована'),
+                duration: Duration(seconds: 2)));
+          },
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+            Icon(Icons.copy_rounded, size: 14, color: AppTheme.primary),
+            SizedBox(width: 6),
+            Text('Скопировать ссылку',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                color: AppTheme.primary)),
+          ]),
+        ),
+      ]),
+    );
+  }
 }
 
 // ── Wallet Card ───────────────────────────────────────────────────────────────
