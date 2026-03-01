@@ -39,6 +39,7 @@ class VpnConnectResponse(BaseModel):
     byedpi_profile: dict[str, Any]
     mode: str  # "hybrid" | "amnezia_only"
     vless_config: dict[str, Any]
+    show_paywall: bool = False  # true на 2-м, 4-м... подключении после истечения триала
 
 
 # ── Auth dependency ────────────────────────────────────────────────────────────
@@ -89,11 +90,9 @@ async def connect_vpn(
     5. Формирует WG-конфиг, ByeDPI-профиль и VLESS+Reality конфиг.
     """
     # 1. Проверка доступа
-    if not (is_user_premium(user) or has_trial(user)):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Subscription expired. Please upgrade to continue.",
-        )
+    # premium / активный триал → полный доступ
+    # истёкший триал (не premium) → ограниченный доступ: сессия 5 мин, watchdog обрывает
+    is_limited = not (is_user_premium(user) or has_trial(user))
 
     # 2. Загрузка сервера
     server_result = await session.execute(
@@ -107,21 +106,22 @@ async def connect_vpn(
         )
 
     # 3. Поиск или создание подключения
+    # Ищем любую запись (активную ИЛИ деактивированную watchdog'ом) — сначала последнюю.
     conn_result = await session.execute(
-        select(UserConnection).where(
+        select(UserConnection)
+        .where(
             UserConnection.user_id == user.id,
             UserConnection.server_id == server_id,
-            UserConnection.is_active == True,
         )
+        .order_by(UserConnection.created_at.desc())
+        .limit(1)
     )
     connection = conn_result.scalar_one_or_none()
 
-    is_new_connection = connection is None
-
-    if is_new_connection:
+    if connection is None:
+        # Первое подключение: создаём запись с ключами и IP
         private_key, public_key = WireGuardService.generate_keypair()
         peer_ip = await WireGuardService.allocate_ip(session, server_id)
-
         connection = UserConnection(
             user_id=user.id,
             server_id=server_id,
@@ -132,9 +132,19 @@ async def connect_vpn(
             created_at=datetime.utcnow(),
         )
         session.add(connection)
+    else:
+        # Переиспользуем существующую запись (IP и ключи не меняем, просто реактивируем)
+        connection.is_active = True
 
-    # 4. Обновляем время последнего использования
+    # 4. Обновляем время последнего использования (это старт сессии для watchdog'а)
     connection.last_used_at = datetime.utcnow()
+
+    # 4.1 Для limited-пользователей: счётчик подключений → show_paywall через раз
+    show_paywall = False
+    if is_limited:
+        user.post_trial_connect_count += 1
+        show_paywall = (user.post_trial_connect_count % 2 == 0)
+
     await session.commit()
 
     # 5. Регистрируем пир на WireGuard-интерфейсе
@@ -143,7 +153,7 @@ async def connect_vpn(
         ip=connection.allocated_ip,
     )
 
-    # 5.1 Лимит скорости: trial=3mbit, premium=10mbit
+    # 5.1 Лимит скорости: premium=10mbit, trial/limited=3mbit
     _user_is_premium = is_user_premium(user)
     tier = "premium" if _user_is_premium else "trial"
     log.info("[SPEED] user=%s tier=%s peer_ip=%s", user.device_id, tier, connection.allocated_ip)
@@ -175,4 +185,5 @@ async def connect_vpn(
         byedpi_profile=byedpi_profile,
         mode=mode,
         vless_config=vless_config,
+        show_paywall=show_paywall,
     )

@@ -75,7 +75,12 @@ class VpnProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> connect({String? countryCode, String mode = 'stealth', bool isPremium = false}) async {
+  Future<void> connect({
+    String? countryCode,
+    String mode = 'stealth',
+    bool isPremium = false,
+    void Function()? onShowPaywall,
+  }) async {
     _isUnlimitedSession = isPremium;
     // Авто-регистрация если нет токена
     final token = await SecureStorage.getToken();
@@ -111,8 +116,9 @@ class VpnProvider extends ChangeNotifier {
     try {
       // Получить WG-конфиг с сервера
       final cfg = await _repo.connect(_selected!.id);
-      final wgConfig = cfg['wg_config'] as String? ?? '';
-      final country  = countryCode ?? _selected!.country;
+      final wgConfig   = cfg['wg_config'] as String? ?? '';
+      final showPaywall = cfg['show_paywall'] == true;
+      final country    = countryCode ?? _selected!.country;
 
       // Подключиться через StealthVPNService (режим по выбору пользователя)
       final VPNConnectionResult result;
@@ -140,6 +146,9 @@ class VpnProvider extends ChangeNotifier {
 
       _proxyAddress = result.proxyAddress;
       _finishConnect();
+      if (showPaywall) {
+        onShowPaywall?.call();
+      }
     } catch (e) {
       _status = VpnStatus.error;
       _error  = e.toString();

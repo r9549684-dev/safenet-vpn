@@ -31,6 +31,7 @@ class User(Base):
     referral_balance: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=Decimal("0"))
     paid_referrals_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     next_payment_discount: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=Decimal("0"))
+    post_trial_connect_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     @property
     def is_trial(self) -> bool:

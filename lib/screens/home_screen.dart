@@ -30,7 +30,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
   String _mode = 'stealth';
-  int _connectCount = 0;
 
   @override
   void initState() {
@@ -109,36 +108,32 @@ class _HomeScreenState extends State<HomeScreen> {
                             onToggle: () async {
                               if (vpn.status == VpnStatus.connected ||
                                   vpn.status == VpnStatus.error) {
-                                if (vpn.status == VpnStatus.error) {
-                                  final auth = context.read<AuthProvider>();
-                                  final isPremium = (auth.user?.isPremium ?? false) || (auth.user?.isTrialActive ?? false);
-                                  _connectCount++;
-                                  if (!isPremium && _connectCount % 2 == 0 && mounted) {
-                                    await _showPaymentSheet(context);
-                                  }
-                                  if (!mounted) return;
-                                  vpn.connect(
-                                    countryCode: server.country,
-                                    mode: _mode,
-                                    isPremium: isPremium,
-                                  );
-                                } else {
-                                  vpn.disconnect();
-                                }
-                              } else if (vpn.status == VpnStatus.disconnected) {
+                              if (vpn.status == VpnStatus.error) {
                                 final auth = context.read<AuthProvider>();
                                 final isPremium = (auth.user?.isPremium ?? false) || (auth.user?.isTrialActive ?? false);
-                                _connectCount++;
-                                if (!isPremium && _connectCount % 2 == 0 && mounted) {
-                                  await _showPaymentSheet(context);
-                                }
-                                if (!mounted) return;
                                 vpn.connect(
                                   countryCode: server.country,
                                   mode: _mode,
                                   isPremium: isPremium,
+                                  onShowPaywall: () {
+                                    if (mounted) _showPaymentSheet(context);
+                                  },
                                 );
+                              } else {
+                                vpn.disconnect();
                               }
+                            } else if (vpn.status == VpnStatus.disconnected) {
+                              final auth = context.read<AuthProvider>();
+                              final isPremium = (auth.user?.isPremium ?? false) || (auth.user?.isTrialActive ?? false);
+                              vpn.connect(
+                                countryCode: server.country,
+                                mode: _mode,
+                                isPremium: isPremium,
+                                onShowPaywall: () {
+                                  if (mounted) _showPaymentSheet(context);
+                                },
+                              );
+                            }
                             },
                             onModeChange: (m) => setState(() => _mode = m),
                           ),

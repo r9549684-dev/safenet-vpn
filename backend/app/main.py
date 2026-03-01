@@ -1,7 +1,10 @@
+import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.logging_conf import setup_logging
+from app.services.session_watchdog import run_session_watchdog
 from app.api import (
     health_router,
     auth_router,
@@ -18,7 +21,20 @@ from app.api import (
 
 setup_logging(settings.DEBUG)
 
-app = FastAPI(title="SafeNet v2 MVP", debug=settings.DEBUG)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Запускаем фоновые задачи при старте приложения."""
+    watchdog_task = asyncio.create_task(run_session_watchdog())
+    yield
+    watchdog_task.cancel()
+    try:
+        await watchdog_task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(title="SafeNet v2 MVP", debug=settings.DEBUG, lifespan=lifespan)
 
 if settings.cors_list():
     app.add_middleware(
