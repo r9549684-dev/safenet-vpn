@@ -1,5 +1,4 @@
-import 'package:device_info_plus/device_info_plus.dart';
-import 'dart:io';
+import 'package:uuid/uuid.dart';
 import '../local/secure_storage.dart';
 import '../remote/api_client.dart';
 import '../remote/endpoints.dart';
@@ -9,15 +8,12 @@ class AuthRepository {
   final _api = ApiClient();
 
   Future<String> getOrCreateDeviceId() async {
+    // Возвращаем сохранённый ID если уже есть
     var id = await SecureStorage.getDeviceId();
     if (id != null) return id;
 
-    final info = DeviceInfoPlugin();
-    if (Platform.isAndroid) {
-      id = (await info.androidInfo).androidId ?? DateTime.now().millisecondsSinceEpoch.toString();
-    } else {
-      id = (await info.iosInfo).identifierForVendor ?? DateTime.now().millisecondsSinceEpoch.toString();
-    }
+    // При первой установке — генерируем уникальный UUID и сохраняем навсегда
+    id = const Uuid().v4();
     await SecureStorage.saveDeviceId(id);
     return id;
   }
