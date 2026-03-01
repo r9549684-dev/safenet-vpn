@@ -14,7 +14,7 @@ class AuthRepository {
 
     final info = DeviceInfoPlugin();
     if (Platform.isAndroid) {
-      id = (await info.androidInfo).id;
+      id = (await info.androidInfo).androidId ?? DateTime.now().millisecondsSinceEpoch.toString();
     } else {
       id = (await info.iosInfo).identifierForVendor ?? DateTime.now().millisecondsSinceEpoch.toString();
     }
