@@ -188,6 +188,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get choosePlan => 'CHOOSE PLAN';
 
   @override
+  String get plan1w => '1 Week';
+
+  @override
   String get plan1m => '1 Month';
 
   @override

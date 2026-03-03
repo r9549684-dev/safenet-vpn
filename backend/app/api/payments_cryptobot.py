@@ -114,21 +114,24 @@ async def cryptobot_webhook(
     invoice_row.raw["webhook_last_hash"] = body_hash
     invoice_row.raw["webhook_last_payload"] = payload
 
-    # Extract months from payload
-    months = 1
+    # Extract days or months from payload (new format: days:N; legacy: months:N)
+    grant_days = 0
+    grant_months = 0
     try:
         parts = (invoice_row.payload or "").split(":")
-        if "months" in parts:
-            months = int(parts[parts.index("months") + 1])
+        if "days" in parts:
+            grant_days = int(parts[parts.index("days") + 1])
+        elif "months" in parts:
+            grant_months = int(parts[parts.index("months") + 1])
     except Exception:
-        months = 1
+        grant_months = 1
 
     # Load paying user
     uq = await session.execute(select(User).where(User.id == invoice_row.user_id))
     user = uq.scalar_one_or_none()
     if user:
         await session.commit()
-        await grant_premium(session, user, months)
+        await grant_premium(session, user, months=grant_months, days=grant_days)
 
         # Referral reward: если у юзера есть реферер — начисляем вознаграждение
         if user.referred_by:

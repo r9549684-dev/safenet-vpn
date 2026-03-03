@@ -76,6 +76,7 @@
     "placeholders": { "days": { "type": "int" } }
   },
   "choosePlan": "CHOOSE PLAN",
+  "plan1w": "1 Week",
   "plan1m": "1 Month",
   "plan3m": "3 Months",
   "plan12m": "12 Months",

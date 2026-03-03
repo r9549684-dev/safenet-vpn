@@ -240,7 +240,7 @@ class VpnProvider extends ChangeNotifier {
     _txSpeed      = 0;
     _lastRxBytes  = 0;
     _lastTxBytes  = 0;
-    _error = '⏱ 5-мин сессия после триала завершена. Нажмите RETRY для переподключения.';
+    _error = '⏱ 5-минутная сессия истекла. Нажмите кнопку выше для переподключения.';
     notifyListeners();
   }
 }

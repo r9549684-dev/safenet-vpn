@@ -188,6 +188,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get choosePlan => 'انتخاب طرح';
 
   @override
+  String get plan1w => '۱ هفته';
+
+  @override
   String get plan1m => '۱ ماه';
 
   @override

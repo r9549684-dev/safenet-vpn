@@ -188,6 +188,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get choosePlan => 'ВЫБЕРИТЕ ПЛАН';
 
   @override
+  String get plan1w => '1 Неделя';
+
+  @override
   String get plan1m => '1 Месяц';
 
   @override

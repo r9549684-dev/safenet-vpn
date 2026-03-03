@@ -13,9 +13,11 @@ def is_user_premium(user: User) -> bool:
 def has_trial(user: User) -> bool:
     return user.trial_ends_at > now_utc()
 
-async def grant_premium(session: AsyncSession, user: User, months: int) -> None:
-    # Simple: month = 30 days
-    add = timedelta(days=30 * months)
+async def grant_premium(session: AsyncSession, user: User, months: int = 0, days: int = 0) -> None:
+    """Grant premium. Pass either months or days (days takes priority if both given)."""
+    if days <= 0:
+        days = 30 * months
+    add = timedelta(days=days)
     base = user.premium_until if user.premium_until and user.premium_until > now_utc() else now_utc()
     user.is_premium = True
     user.premium_until = base + add

@@ -647,6 +647,7 @@ class _PremiumTabState extends State<_PremiumTab> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final plans = [
+      {'id': 'weekly',    'label': l.plan1w,  'price': '2.99',  'popular': false, 'save': null},
       {'id': 'monthly',   'label': l.plan1m,  'price': '5.99',  'popular': false, 'save': null},
       {'id': 'quarterly', 'label': l.plan3m,  'price': '14.99', 'popular': true,  'save': '17%'},
       {'id': 'yearly',    'label': l.plan12m, 'price': '29.99', 'popular': false, 'save': '37%'},
@@ -987,6 +988,59 @@ class _SettingsTabState extends State<_SettingsTab> {
     if (mounted) setState(() { _killSwitch = ks; _autoConnect = ac; });
   }
 
+  Future<void> _openIranMode(BuildContext ctx, String? deviceId) async {
+    final id = deviceId ?? '';
+    if (id.isEmpty) return;
+    final token = id.length >= 16 ? id.substring(0, 16) : id;
+    final subUrl = 'https://api.loveaibot.net/iran/subscribe/$token';
+    final hiddifyLink = 'hiddify://import/${Uri.encodeComponent(subUrl)}';
+
+    // 1. Попытка открыть Hiddify напрямую
+    final hiddifyUri = Uri.parse(hiddifyLink);
+    if (await canLaunchUrl(hiddifyUri)) {
+      await launchUrl(hiddifyUri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    // 2. Hiddify не установлен — копируем ссылку и показываем инструкцию
+    await Clipboard.setData(ClipboardData(text: subUrl));
+    if (ctx.mounted) {
+      showDialog(
+        context: ctx,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: const Text('🇮🇷 Iran Mode',
+            style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w800)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '1. Установите Hiddify из Google Play\n'
+                '2. Откройте Hiddify\n'
+                '3. Нажмите + → «Из буфера»\n'
+                '4. Нажмите «Подключиться»',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              const Text('Ссылка уже скопирована в буфер:',
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+              const SizedBox(height: 4),
+              Text(subUrl,
+                style: const TextStyle(fontSize: 10, color: AppTheme.primary)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(_),
+              child: const Text('Понятно'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -1111,6 +1165,29 @@ class _SettingsTabState extends State<_SettingsTab> {
                     ),
                   ),
                 ]),
+              ),
+              const SizedBox(height: 24),
+              // ── Iran Mode ────────────────────────────────────────────────
+              _sectionLabel('🇮🇷 Усиленный режим'),
+              _GlassCard(
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: const Text('🔒', style: TextStyle(fontSize: 22)),
+                  title: const Text('Iran / Сильные блокировки',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+                  subtitle: const Text('VLESS+Reality+Fragment — обходит DPI в Иране',
+                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text('Открыть',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                  ),
+                  onTap: () async => _openIranMode(ctx, user?.deviceId),
+                ),
               ),
               const SizedBox(height: 32),
               SizedBox(

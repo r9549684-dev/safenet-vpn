@@ -439,6 +439,12 @@ abstract class AppLocalizations {
   /// **'CHOOSE PLAN'**
   String get choosePlan;
 
+  /// No description provided for @plan1w.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Week'**
+  String get plan1w;
+
   /// No description provided for @plan1m.
   ///
   /// In en, this message translates to:

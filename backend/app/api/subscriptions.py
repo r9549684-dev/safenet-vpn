@@ -13,11 +13,13 @@ from app.api.users import get_current_user
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
-# Plan catalogue: id -> (months, price_usd)
+# Plan catalogue: id -> (days, price_usd)
+# days used directly in payload & grant_premium; months kept for legacy plans
 PLANS = {
-    "monthly":   {"months": 1,  "price": 5.99,  "label": "1 Month"},
-    "quarterly": {"months": 3,  "price": 14.99, "label": "3 Months"},
-    "yearly":    {"months": 12, "price": 29.99, "label": "12 Months"},
+    "weekly":    {"days": 7,   "price": 2.99,  "label": "1 Week"},
+    "monthly":   {"days": 30,  "price": 5.99,  "label": "1 Month"},
+    "quarterly": {"days": 90,  "price": 14.99, "label": "3 Months"},
+    "yearly":    {"days": 365, "price": 29.99, "label": "12 Months"},
 }
 
 
@@ -51,10 +53,10 @@ async def purchase(
     if not plan_info:
         raise HTTPException(status_code=400, detail=f"Unknown plan: {plan}. Valid: {list(PLANS.keys())}")
 
-    months = plan_info["months"]
+    days = plan_info["days"]
     amount = plan_info["price"]
 
-    payload = f"user:{user.id}:months:{months}:ts:{int(datetime.utcnow().timestamp())}"
+    payload = f"user:{user.id}:days:{days}:ts:{int(datetime.utcnow().timestamp())}"
     desc = f"SafeNet VPN Premium — {plan_info['label']}"
 
     data = await cryptobot.create_invoice(amount=amount, payload=payload, description=desc)
@@ -86,6 +88,6 @@ async def purchase(
         "invoice_url": inv.get("pay_url"),
         "invoice_id":  provider_invoice_id,
         "plan":        plan,
-        "months":      months,
+        "days":        days,
         "amount":      amount,
     }
