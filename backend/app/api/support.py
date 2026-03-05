@@ -1,13 +1,14 @@
 """
 Support API — AI-agent backend
-Агент на телефоне использует JWT пользователя для всех вызовов.
-role: 'user' | 'agent' передаётся в теле запроса.
+- Пользователь (Flutter): JWT токен, POST /support/messages (role='user')
+- Felix агент:  X-Agent-Secret header, POST /support/agent-message (role='agent')
 """
+import os
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,8 @@ from app.models.support import SupportSession, SupportMessage
 from app.api.users import get_current_user
 
 router = APIRouter(prefix="/support", tags=["support"])
+
+AGENT_SECRET = os.getenv("AGENT_SECRET", "")
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
@@ -135,12 +138,12 @@ async def save_message(
     session: AsyncSession = Depends(get_session),
 ):
     """
-    Сохранить сообщение (role='user' или role='agent').
-    Агент вызывает дважды за один диалог-оборот:
-      1) сохраняет вопрос пользователя (role='user')
-      2) сохраняет свой ответ (role='agent')
+    Flutter: пользователь отправляет сообщение (role='user').
+    JWT аутентификация, только role='user' разрешён.
     """
-    # Проверить что сессия принадлежит этому пользователю
+    if body.role != "user":
+        raise HTTPException(403, "Use /support/agent-message for agent role")
+
     sup_session = await session.get(SupportSession, body.session_id)
     if not sup_session:
         raise HTTPException(404, "Session not found")
@@ -152,7 +155,45 @@ async def save_message(
     msg = SupportMessage(
         session_id=body.session_id,
         user_id=current_user.id,
-        role=body.role,
+        role="user",
+        message=body.message,
+    )
+    session.add(msg)
+    await session.commit()
+    await session.refresh(msg)
+    return _msg_out(msg)
+
+
+class AgentMessageCreate(BaseModel):
+    session_id: UUID
+    message: str = Field(min_length=1, max_length=8000)
+
+
+@router.post("/agent-message", status_code=201)
+async def agent_message(
+    body: AgentMessageCreate,
+    x_agent_secret: Optional[str] = Header(default=None, alias="X-Agent-Secret"),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Felix-бот: отправить ответ агента (role='agent').
+    Аутентификация: X-Agent-Secret header.
+    """
+    if not AGENT_SECRET:
+        raise HTTPException(503, "Agent auth not configured")
+    if x_agent_secret != AGENT_SECRET:
+        raise HTTPException(401, "Invalid agent secret")
+
+    sup_session = await session.get(SupportSession, body.session_id)
+    if not sup_session:
+        raise HTTPException(404, "Session not found")
+    if not sup_session.is_open:
+        raise HTTPException(400, "Session is already resolved")
+
+    msg = SupportMessage(
+        session_id=body.session_id,
+        user_id=sup_session.user_id,
+        role="agent",
         message=body.message,
     )
     session.add(msg)

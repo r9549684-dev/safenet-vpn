@@ -1,4 +1,4 @@
-name: safenet_vpn
+﻿name: safenet_vpn
 description: SafeNet VPN - Stealth bypass for censored regions
 version: 1.0.0+1
 publish_to: 'none'
@@ -38,6 +38,7 @@ dependencies:
   url_launcher: ^6.3.0
   qr_flutter: ^4.1.0
   share_plus: ^10.0.2
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +51,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
+    # assets/singbox/  # Iran build only (build_iran.ps1)
   fonts:
     - family: Vazirmatn
       fonts:

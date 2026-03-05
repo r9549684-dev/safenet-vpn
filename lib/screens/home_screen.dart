@@ -20,6 +20,8 @@ import 'splash_screen.dart';
 import 'affiliate_screen.dart';
 import 'support_screen.dart';
 import '../services/update_checker.dart';
+import '../core/singbox_vpn.dart' show SingboxVpn, bundleSingbox;
+import '../core/pricing_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,7 +31,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
-  String _mode = 'stealth';
+  String _mode = 'hybrid';
 
   @override
   void initState() {
@@ -401,8 +403,8 @@ class _HomeTab extends StatelessWidget {
                     Text(l.homeEarnTitle,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                     const SizedBox(height: 2),
-                    Text(l.homeEarnSubtitle,
-                      style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                  Text(l.homeEarnSubtitle,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
                   ],
                 )),
                 const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white60, size: 15),
@@ -490,18 +492,39 @@ class _HomeTab extends StatelessWidget {
             style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
               color: AppTheme.textMuted, letterSpacing: 3)),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 2.2,
+          Column(
             children: [
-              _ModeCard(id: 'stealth', label: l.modeStealthLabel, desc: l.modeStealthDesc,
-                icon: Icons.shield_rounded, selected: mode == 'stealth', onTap: onModeChange),
-              _ModeCard(id: 'byedpi', label: l.modeByedpiLabel, desc: l.modeByedpiDesc,
-                icon: Icons.bolt_rounded, selected: mode == 'byedpi', onTap: onModeChange),
-              _ModeCard(id: 'amnezia', label: l.modeAmneziaLabel, desc: l.modeAmneziaDesc,
-                icon: Icons.lock_rounded, selected: mode == 'amnezia', onTap: onModeChange),
-              _ModeCard(id: 'hybrid', label: l.modeHybridLabel, desc: l.modeHybridDesc,
-                icon: Icons.grid_view_rounded, selected: mode == 'hybrid', onTap: onModeChange),
+              _ModeCard(
+                id: 'hybrid',
+                label: 'Максимальный режим',
+                icon: Icons.rocket_launch_rounded,
+                selected: mode == 'hybrid',
+                onTap: onModeChange,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ModeCard(
+                      id: 'amnezia',
+                      label: 'Тунель',
+                      icon: Icons.lock_rounded,
+                      selected: mode == 'amnezia',
+                      onTap: onModeChange,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ModeCard(
+                      id: 'byedpi',
+                      label: 'Супер',
+                      icon: Icons.bolt_rounded,
+                      selected: mode == 'byedpi',
+                      onTap: onModeChange,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
 
@@ -604,6 +627,40 @@ class _PremiumTabState extends State<_PremiumTab> {
   String _selected = 'quarterly';
   final _promoCtrl = TextEditingController();
   bool _promoLoading = false;
+  List<Map<String, dynamic>>? _plans;
+  String _country = '';
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      if (!mounted) return;
+      _country = context.read<AuthProvider>().country;
+      final plans = await PricingService.getPlans(_country);
+      if (mounted) setState(() => _plans = plans);
+    });
+  }
+
+  double _priceFor(String planId) {
+    const fb = {'weekly': 2.99, 'monthly': 5.99, 'quarterly': 14.99, 'yearly': 29.99};
+    if (_plans == null) return fb[planId] ?? 5.99;
+    final p = _plans!.firstWhere((e) => e['plan'] == planId, orElse: () => <String, dynamic>{});
+    return (p['usd'] as num?)?.toDouble() ?? (fb[planId] ?? 5.99);
+  }
+
+  String? _savePercent(String planId) {
+    final monthly = _priceFor('monthly');
+    if (monthly == 0) return null;
+    if (planId == 'quarterly') {
+      final pct = ((1 - _priceFor('quarterly') / (monthly * 3)) * 100).round();
+      return pct > 0 ? '$pct%' : null;
+    }
+    if (planId == 'yearly') {
+      final pct = ((1 - _priceFor('yearly') / (monthly * 12)) * 100).round();
+      return pct > 0 ? '$pct%' : null;
+    }
+    return null;
+  }
 
   @override
   void dispose() {
@@ -647,10 +704,10 @@ class _PremiumTabState extends State<_PremiumTab> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final plans = [
-      {'id': 'weekly',    'label': l.plan1w,  'price': '2.99',  'popular': false, 'save': null},
-      {'id': 'monthly',   'label': l.plan1m,  'price': '5.99',  'popular': false, 'save': null},
-      {'id': 'quarterly', 'label': l.plan3m,  'price': '14.99', 'popular': true,  'save': '17%'},
-      {'id': 'yearly',    'label': l.plan12m, 'price': '29.99', 'popular': false, 'save': '37%'},
+      {'id': 'weekly',    'label': l.plan1w,  'price': _priceFor('weekly').toStringAsFixed(2),    'popular': false, 'save': null},
+      {'id': 'monthly',   'label': l.plan1m,  'price': _priceFor('monthly').toStringAsFixed(2),   'popular': false, 'save': null},
+      {'id': 'quarterly', 'label': l.plan3m,  'price': _priceFor('quarterly').toStringAsFixed(2), 'popular': true,  'save': _savePercent('quarterly')},
+      {'id': 'yearly',    'label': l.plan12m, 'price': _priceFor('yearly').toStringAsFixed(2),    'popular': false, 'save': _savePercent('yearly')},
     ];
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -825,7 +882,7 @@ class _PremiumTabState extends State<_PremiumTab> {
                   ),
                   child: ElevatedButton(
                     onPressed: sub.isLoading ? null : () async {
-                      final url = await sub.createPurchase(_selected);
+                      final url = await sub.createPurchase(_selected, country: _country);
                       if (url != null && ctx.mounted) {
                         final uri = Uri.tryParse(url);
                         if (uri != null && await canLaunchUrl(uri)) {
@@ -988,59 +1045,6 @@ class _SettingsTabState extends State<_SettingsTab> {
     if (mounted) setState(() { _killSwitch = ks; _autoConnect = ac; });
   }
 
-  Future<void> _openIranMode(BuildContext ctx, String? deviceId) async {
-    final id = deviceId ?? '';
-    if (id.isEmpty) return;
-    final token = id.length >= 16 ? id.substring(0, 16) : id;
-    final subUrl = 'https://api.loveaibot.net/iran/subscribe/$token';
-    final hiddifyLink = 'hiddify://import/${Uri.encodeComponent(subUrl)}';
-
-    // 1. Попытка открыть Hiddify напрямую
-    final hiddifyUri = Uri.parse(hiddifyLink);
-    if (await canLaunchUrl(hiddifyUri)) {
-      await launchUrl(hiddifyUri, mode: LaunchMode.externalApplication);
-      return;
-    }
-
-    // 2. Hiddify не установлен — копируем ссылку и показываем инструкцию
-    await Clipboard.setData(ClipboardData(text: subUrl));
-    if (ctx.mounted) {
-      showDialog(
-        context: ctx,
-        builder: (_) => AlertDialog(
-          backgroundColor: AppTheme.surface,
-          title: const Text('🇮🇷 Iran Mode',
-            style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w800)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '1. Установите Hiddify из Google Play\n'
-                '2. Откройте Hiddify\n'
-                '3. Нажмите + → «Из буфера»\n'
-                '4. Нажмите «Подключиться»',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              const Text('Ссылка уже скопирована в буфер:',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-              const SizedBox(height: 4),
-              Text(subUrl,
-                style: const TextStyle(fontSize: 10, color: AppTheme.primary)),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(_),
-              child: const Text('Понятно'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -1166,29 +1170,6 @@ class _SettingsTabState extends State<_SettingsTab> {
                   ),
                 ]),
               ),
-              const SizedBox(height: 24),
-              // ── Iran Mode ────────────────────────────────────────────────
-              _sectionLabel('🇮🇷 Усиленный режим'),
-              _GlassCard(
-                padding: EdgeInsets.zero,
-                child: ListTile(
-                  leading: const Text('🔒', style: TextStyle(fontSize: 22)),
-                  title: const Text('Iran / Сильные блокировки',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
-                  subtitle: const Text('VLESS+Reality+Fragment — обходит DPI в Иране',
-                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text('Открыть',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                  ),
-                  onTap: () async => _openIranMode(ctx, user?.deviceId),
-                ),
-              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -1251,22 +1232,6 @@ class _SettingsTabState extends State<_SettingsTab> {
                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _GlassCard(
-                padding: EdgeInsets.zero,
-                child: ListTile(
-                  leading: const Text('🤝', style: TextStyle(fontSize: 20)),
-                  title: Text(ll.affiliateNavTitle,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-                  subtitle: Text(ll.affiliateNavSubtitle,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textMuted),
-                  onTap: () => Navigator.push(
-                    ctx,
-                    MaterialPageRoute(builder: (_) => const AffiliateScreen()),
                   ),
                 ),
               ),
@@ -1417,13 +1382,13 @@ class _ModeBadge extends StatelessWidget {
 class _ModeCard extends StatelessWidget {
   final String id;
   final String label;
-  final String desc;
+  final String? desc;
   final IconData icon;
   final bool selected;
   final ValueChanged<String> onTap;
 
   const _ModeCard({
-    required this.id, required this.label, required this.desc,
+    required this.id, required this.label, this.desc,
     required this.icon, required this.selected, required this.onTap,
   });
 
@@ -1433,7 +1398,7 @@ class _ModeCard extends StatelessWidget {
       onTap: () => onTap(id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: selected ? AppTheme.primary.withValues(alpha: 0.15) : AppTheme.surface,
           border: Border.all(
@@ -1453,7 +1418,8 @@ class _ModeCard extends StatelessWidget {
                 fontSize: 12, fontWeight: FontWeight.w700,
                 color: selected ? AppTheme.textPrimary : AppTheme.textSecondary,
               )),
-              Text(desc, style: const TextStyle(fontSize: 9, color: AppTheme.textMuted)),
+              if (desc != null && desc!.isNotEmpty)
+                Text(desc!, style: const TextStyle(fontSize: 9, color: AppTheme.textMuted)),
             ],
           )),
         ]),
@@ -1549,6 +1515,40 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   String _selected = 'quarterly';
   final _promoCtrl = TextEditingController();
   bool _promoLoading = false;
+  List<Map<String, dynamic>>? _plans;
+  String _country = '';
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      if (!mounted) return;
+      _country = context.read<AuthProvider>().country;
+      final plans = await PricingService.getPlans(_country);
+      if (mounted) setState(() => _plans = plans);
+    });
+  }
+
+  double _priceFor(String planId) {
+    const fb = {'weekly': 2.99, 'monthly': 5.99, 'quarterly': 14.99, 'yearly': 29.99};
+    if (_plans == null) return fb[planId] ?? 5.99;
+    final p = _plans!.firstWhere((e) => e['plan'] == planId, orElse: () => <String, dynamic>{});
+    return (p['usd'] as num?)?.toDouble() ?? (fb[planId] ?? 5.99);
+  }
+
+  String? _savePercent(String planId) {
+    final monthly = _priceFor('monthly');
+    if (monthly == 0) return null;
+    if (planId == 'quarterly') {
+      final pct = ((1 - _priceFor('quarterly') / (monthly * 3)) * 100).round();
+      return pct > 0 ? '$pct%' : null;
+    }
+    if (planId == 'yearly') {
+      final pct = ((1 - _priceFor('yearly') / (monthly * 12)) * 100).round();
+      return pct > 0 ? '$pct%' : null;
+    }
+    return null;
+  }
 
   @override
   void dispose() {
@@ -1592,9 +1592,9 @@ class _PaymentSheetState extends State<_PaymentSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final plans = [
-      {'id': 'monthly',   'label': l.plan1m,  'price': '5.99',  'badge': null,             'save': null},
-      {'id': 'quarterly', 'label': l.plan3m,  'price': '14.99', 'badge': l.badgeBestPrice, 'save': '17%'},
-      {'id': 'yearly',    'label': l.plan12m, 'price': '29.99', 'badge': null,             'save': '37%'},
+      {'id': 'monthly',   'label': l.plan1m,  'price': _priceFor('monthly').toStringAsFixed(2),   'badge': null,             'save': null},
+      {'id': 'quarterly', 'label': l.plan3m,  'price': _priceFor('quarterly').toStringAsFixed(2), 'badge': l.badgeBestPrice, 'save': _savePercent('quarterly')},
+      {'id': 'yearly',    'label': l.plan12m, 'price': _priceFor('yearly').toStringAsFixed(2),    'badge': null,             'save': _savePercent('yearly')},
     ];
     return Container(
       decoration: const BoxDecoration(
@@ -1721,7 +1721,7 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                   ),
                   child: ElevatedButton(
                     onPressed: sub.isLoading ? null : () async {
-                      final url = await sub.createPurchase(_selected);
+                      final url = await sub.createPurchase(_selected, country: _country);
                       if (url != null && ctx.mounted) {
                         final uri = Uri.tryParse(url);
                         if (uri != null && await canLaunchUrl(uri)) {

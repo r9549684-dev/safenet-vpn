@@ -994,7 +994,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeEarnSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Invite friends — get discounts & income'**
+  /// **'Additional income from your subscribers!'**
   String get homeEarnSubtitle;
 
   /// No description provided for @homeInviteTitle.

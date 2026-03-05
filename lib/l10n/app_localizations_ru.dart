@@ -470,7 +470,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeEarnTitle => 'Зарабатывай с нами';
 
   @override
-  String get homeEarnSubtitle => 'Приглашай друзей — получай скидки и доход';
+  String get homeEarnSubtitle => 'Дополнительный доход с твоих подписчиков!';
 
   @override
   String get homeInviteTitle => '👥 Подключи друга — плати полцены';

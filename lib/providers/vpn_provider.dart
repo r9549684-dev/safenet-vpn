@@ -5,6 +5,8 @@ import '../data/local/secure_storage.dart';
 import '../domain/models/server.dart';
 import '../domain/enums/vpn_status.dart';
 import '../services/vpn_service.dart';
+import '../core/singbox_vpn.dart';
+import '../core/config_cache_service.dart';
 
 class VpnProvider extends ChangeNotifier {
   final _repo    = ServerRepository();
@@ -19,6 +21,7 @@ class VpnProvider extends ChangeNotifier {
   Duration    _elapsed = Duration.zero;
   String?     _proxyAddress;
   bool        _isLoadingServers = false;
+  bool        _usingSingbox = false;
 
   // Traffic stats
   double _rxSpeed = 0;
@@ -114,11 +117,48 @@ class VpnProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Получить WG-конфиг с сервера
-      final cfg = await _repo.connect(_selected!.id);
-      final wgConfig   = cfg['wg_config'] as String? ?? '';
-      final showPaywall = cfg['show_paywall'] == true;
-      final country    = countryCode ?? _selected!.country;
+      // VLESS+Reality+Fragment (sing-box, только China/Iran билд)
+      if (mode == 'hybrid' && bundleSingbox) {
+        final deviceId = await SecureStorage.getDeviceId() ?? '';
+        if (deviceId.isEmpty) throw 'Device ID не найден';
+
+        // Взять конфиг из головы очереди
+        var sbConfig = await SingboxVpn.fetchConfig(deviceId);
+        if (sbConfig == null) throw 'Не удалось загрузить VLESS конфиг';
+
+        // Попытка подключения + тихий failover
+        var ok = await SingboxVpn.start(sbConfig);
+        if (!ok) {
+          final nextCfg = await SingboxVpn.fetchNextConfig(deviceId);
+          if (nextCfg != null) ok = await SingboxVpn.start(nextCfg);
+        }
+        if (!ok) throw 'Ошибка запуска VLESS+Reality';
+
+        _usingSingbox = true;
+        _finishConnect();
+        SingboxVpn.consumeAndRefreshCache(deviceId); // fire-and-forget
+        return;
+      }
+
+      // Получить WG-конфиг с сервера (или из кэша при ошибке сети)
+      var wgConfig    = '';
+      var showPaywall = false;
+      try {
+        final cfg = await _repo.connect(_selected!.id);
+        wgConfig    = cfg['wg_config'] as String? ?? '';
+        showPaywall = cfg['show_paywall'] == true;
+        // Сохраняем в кэш для будущих offline-подключений
+        if (wgConfig.isNotEmpty) {
+          ConfigCacheService.saveWgCache(_selected!.id, wgConfig);
+        }
+      } catch (_) {
+        // Нет сети — пробуем последний рабочий конфиг из кэша
+        final cached = await ConfigCacheService.getWgCache(_selected!.id);
+        if (cached == null || cached.isEmpty) rethrow;
+        wgConfig    = cached;
+        showPaywall = false;
+      }
+      final country = countryCode ?? _selected!.country;
 
       // Подключиться через StealthVPNService (режим по выбору пользователя)
       final VPNConnectionResult result;
@@ -172,7 +212,12 @@ class VpnProvider extends ChangeNotifier {
     _status = VpnStatus.disconnecting;
     notifyListeners();
     try {
-      await _service.disconnect();
+      if (_usingSingbox) {
+        await SingboxVpn.stop();
+        _usingSingbox = false;
+      } else {
+        await _service.disconnect();
+      }
     } catch (_) {}
     _status       = VpnStatus.disconnected;
     _active       = null;
@@ -208,15 +253,17 @@ class VpnProvider extends ChangeNotifier {
           return false;
         }
 
-        // Опрашиваем rx/tx байты, вычисляем скорость
+        // Опрашиваем rx/tx байты, вычисляем скорость (только для WG-режимов)
         try {
-          final stats = await _service.getStatus();
-          final rx = (stats['rx_bytes'] as num?)?.toInt() ?? 0;
-          final tx = (stats['tx_bytes'] as num?)?.toInt() ?? 0;
-          _rxSpeed = (rx - _lastRxBytes).toDouble().clamp(0, double.infinity);
-          _txSpeed = (tx - _lastTxBytes).toDouble().clamp(0, double.infinity);
-          _lastRxBytes = rx;
-          _lastTxBytes = tx;
+          if (!_usingSingbox) {
+            final stats = await _service.getStatus();
+            final rx = (stats['rx_bytes'] as num?)?.toInt() ?? 0;
+            final tx = (stats['tx_bytes'] as num?)?.toInt() ?? 0;
+            _rxSpeed = (rx - _lastRxBytes).toDouble().clamp(0, double.infinity);
+            _txSpeed = (tx - _lastTxBytes).toDouble().clamp(0, double.infinity);
+            _lastRxBytes = rx;
+            _lastTxBytes = tx;
+          }
         } catch (_) {
           _rxSpeed = 0;
           _txSpeed = 0;
@@ -230,7 +277,14 @@ class VpnProvider extends ChangeNotifier {
 
   /// Автоотключение по истечению 5-минутной post-trial сессии.
   Future<void> _disconnectPostTrialLimit() async {
-    try { await _service.disconnect(); } catch (_) {}
+    try {
+      if (_usingSingbox) {
+        await SingboxVpn.stop();
+        _usingSingbox = false;
+      } else {
+        await _service.disconnect();
+      }
+    } catch (_) {}
     _status       = VpnStatus.error;
     _active       = null;
     _connectedAt  = null;

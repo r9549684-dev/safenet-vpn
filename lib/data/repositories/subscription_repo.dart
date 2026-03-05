@@ -5,11 +5,11 @@ class SubscriptionRepository {
   final _api = ApiClient();
 
   Future<Map<String, dynamic>> getPricing() =>
-      _api.get<Map<String, dynamic>>(Endpoints.pricing);
+      _api.get<Map<String, dynamic>>(Endpoints.pricing());
 
-  Future<Map<String, dynamic>> purchase(String plan, {bool useCredits = false}) =>
+  Future<Map<String, dynamic>> purchase(String plan, {bool useCredits = false, String country = ''}) =>
       _api.post<Map<String, dynamic>>(
-        Endpoints.purchase(plan),
+        Endpoints.purchase(plan, country),
         params: {'use_compute_credits': useCredits},
       );
 

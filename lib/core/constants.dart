@@ -25,14 +25,15 @@ class AppConstants {
     'VE': {'name': 'Venezuela', 'flag': '🇻🇪', 'lang': 'es'},
   };
 
-  // Pricing (USD)
+  // Pricing (USD) — fallback, актуальные цены fetchются через /subscriptions/pricing?country=
+  // TR: monthly $4.99,  AE: monthly $9.99  (коэффициент от глобального $5.99)
   static const Map<String, Map<String, double>> pricing = {
-    'TR': {'monthly': 2.99, 'yearly': 29.99, 'lifetime': 59.99},
-    'EG': {'monthly': 1.99, 'yearly': 19.99, 'lifetime': 39.99},
-    'PK': {'monthly': 1.49, 'yearly': 14.99, 'lifetime': 29.99},
-    'ID': {'monthly': 1.99, 'yearly': 19.99, 'lifetime': 39.99},
-    'AE': {'monthly': 4.99, 'yearly': 49.99, 'lifetime': 99.99},
-    'VE': {'monthly': 1.99, 'yearly': 19.99, 'lifetime': 39.99},
+    'TR': {'weekly': 2.49, 'monthly': 4.99, 'quarterly': 12.49, 'yearly': 24.99},
+    'AE': {'weekly': 4.99, 'monthly': 9.99, 'quarterly': 24.99, 'yearly': 49.99},
+    'EG': {'monthly': 1.99, 'yearly': 19.99},
+    'PK': {'monthly': 1.49, 'yearly': 14.99},
+    'ID': {'monthly': 1.99, 'yearly': 19.99},
+    'VE': {'monthly': 1.99, 'yearly': 19.99},
   };
 
   // VPN Channel (com.safenet.vpn/methods — по документу)

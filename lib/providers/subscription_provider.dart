@@ -37,12 +37,12 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> createPurchase(String plan, {bool useCredits = false}) async {
+  Future<String?> createPurchase(String plan, {bool useCredits = false, String country = ''}) async {
     _loading = true;
     _error   = null;
     notifyListeners();
     try {
-      final d = await _repo.purchase(plan, useCredits: useCredits);
+      final d = await _repo.purchase(plan, useCredits: useCredits, country: country);
       _invoiceUrl = d['invoice_url'];
       return _invoiceUrl;
     } catch (e) {

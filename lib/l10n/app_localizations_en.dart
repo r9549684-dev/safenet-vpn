@@ -470,7 +470,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeEarnTitle => 'Earn with us';
 
   @override
-  String get homeEarnSubtitle => 'Invite friends — get discounts & income';
+  String get homeEarnSubtitle => 'Additional income from your subscribers!';
 
   @override
   String get homeInviteTitle => '👥 Invite a friend — pay half price';

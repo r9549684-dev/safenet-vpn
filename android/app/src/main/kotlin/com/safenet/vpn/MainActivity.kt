@@ -2,17 +2,24 @@ package com.safenet.vpn
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.util.Log
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.*
+import java.io.File
 
 class MainActivity : FlutterActivity() {
 
-    private val CHANNEL = "com.safenet.vpn/methods"
+    private val CHANNEL          = "com.safenet.vpn/methods"
+    private val INSTALLER_CHANNEL = "com.safenet.safenet_vpn/installer"
+    private val SINGBOX_CHANNEL   = "com.safenet.vpn/singbox"
     private val VPN_PERMISSION_CODE = 1001
+    private val VPN_PERM_SINGBOX    = 1002
     private val TAG = "MainActivity"
 
     // Сохраняем pending-запрос пока ждём разрешения VPN
@@ -22,9 +29,86 @@ class MainActivity : FlutterActivity() {
     private var pendingCountry: String? = null
     private var pendingByeDPI: Map<String, Any>? = null
 
+    // Singbox pending
+    private var pendingSingboxConfig: String? = null
+    private var pendingSingboxResult: MethodChannel.Result? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // ── Hiddify Installer Channel ────────────────────────────────────
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, INSTALLER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "isHiddifyInstalled" -> {
+                        val installed = try {
+                            packageManager.getPackageInfo("app.hiddify.com", 0)
+                            true
+                        } catch (e: Exception) { false }
+                        result.success(installed)
+                    }
+                    "installApk" -> {
+                        val path = call.argument<String>("path")
+                        if (path == null) {
+                            result.error("NO_PATH", "path is required", null)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            val file = File(path)
+                            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+                            } else {
+                                Uri.fromFile(file)
+                            }
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "application/vnd.android.package-archive")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("INSTALL_ERROR", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        // ── Singbox (Iran Mode) Channel ───────────────────────────────
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SINGBOX_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "start" -> {
+                        val cfg = call.argument<String>("config")
+                        if (cfg.isNullOrBlank()) {
+                            result.error("NO_CONFIG", "config required", null)
+                            return@setMethodCallHandler
+                        }
+                        val prepare = android.net.VpnService.prepare(this)
+                        if (prepare != null) {
+                            pendingSingboxConfig = cfg
+                            pendingSingboxResult = result
+                            startActivityForResult(prepare, VPN_PERM_SINGBOX)
+                        } else {
+                            launchSingbox(cfg, result)
+                        }
+                    }
+                    "stop" -> {
+                        startService(Intent(this, SingboxVpnService::class.java).apply {
+                            action = SingboxVpnService.ACTION_STOP
+                        })
+                        result.success(true)
+                    }
+                    "status" -> result.success(mapOf(
+                        "running" to SingboxVpnService.isRunning,
+                        "error"   to (SingboxVpnService.lastError ?: "")
+                    ))
+                    else -> result.notImplemented()
+                }
+            }
+
+        // ── VPN Channel ──────────────────────────────────────────────────────
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -106,8 +190,26 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun launchSingbox(cfg: String, result: MethodChannel.Result) {
+        startService(Intent(this, SingboxVpnService::class.java).apply {
+            action = SingboxVpnService.ACTION_START
+            putExtra(SingboxVpnService.EXTRA_OUTBOUNDS_JSON, cfg)
+        })
+        result.success(mapOf("status" to "starting"))
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VPN_PERM_SINGBOX) {
+            val cfg = pendingSingboxConfig
+            val res = pendingSingboxResult
+            pendingSingboxConfig = null; pendingSingboxResult = null
+            if (resultCode == Activity.RESULT_OK && cfg != null && res != null) {
+                launchSingbox(cfg, res)
+            } else {
+                res?.error("VPN_PERMISSION_DENIED", "User denied VPN permission", null)
+            }
+        }
         if (requestCode == VPN_PERMISSION_CODE) {
             val res = pendingResult ?: return
             if (resultCode == Activity.RESULT_OK) {

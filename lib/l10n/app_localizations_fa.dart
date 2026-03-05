@@ -470,7 +470,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get homeEarnTitle => 'با ما کسب درآمد کنید';
 
   @override
-  String get homeEarnSubtitle => 'دوستان را دعوت کنید — تخفیف و درآمد بگیرید';
+  String get homeEarnSubtitle => 'درآمد اضافی از مشترکین شما!';
 
   @override
   String get homeInviteTitle => '👥 دوست دعوت کن — نصف قیمت بپرداز';

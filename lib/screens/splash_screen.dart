@@ -40,6 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await SecureStorage.setOnboarded(); // пропускаем онбординг
     if (!mounted) return;
     setState(() => _showPicker = false);
+
     _navigate();
   }
 
@@ -140,6 +141,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ── Lang Button ───────────────────────────────────────────────────────────────────────────────
 class _LangButton extends StatelessWidget {
   final String flag;
   final String label;
