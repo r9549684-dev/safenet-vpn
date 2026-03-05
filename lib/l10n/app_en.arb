@@ -164,6 +164,7 @@
   "@promoCodeSuccess": {
     "placeholders": { "months": { "type": "int" } }
   },
+  "linkTelegramBtn": "🔗 Link Telegram",
   "promoCodeLabel": "Have a promo code?",
 
   "serversTitle": "Servers",

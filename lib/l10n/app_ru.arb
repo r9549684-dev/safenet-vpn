@@ -146,6 +146,7 @@
   "@promoCodeSuccess": {
     "placeholders": { "months": { "type": "int" } }
   },
+  "linkTelegramBtn": "🔗 Привязать Telegram",
   "promoCodeLabel": "Есть промокод?",
 
   "serversTitle": "Серверы",

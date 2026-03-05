@@ -1,6 +1,10 @@
 # Secrets / deploy credentials
 .env
 
+# Large binary assets (не коммитить в git)
+assets/singbox/
+assets/hiddify/
+
 # Miscellaneous
 *.class
 *.log

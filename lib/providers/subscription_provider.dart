@@ -11,11 +11,13 @@ class SubscriptionProvider extends ChangeNotifier {
 
   PricingModel? _pricing;
   bool _loading = false;
+  bool _tgLoading = false;
   String? _error;
   String? _invoiceUrl;
 
   PricingModel? get pricing    => _pricing;
   bool          get isLoading  => _loading;
+  bool          get isTgLoading => _tgLoading;
   String?       get error      => _error;
   String?       get invoiceUrl => _invoiceUrl;
 
@@ -50,6 +52,22 @@ class SubscriptionProvider extends ChangeNotifier {
       return null;
     } finally {
       _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> linkTelegram() async {
+    _tgLoading = true;
+    _error     = null;
+    notifyListeners();
+    try {
+      final d = await _repo.generateTelegramLinkToken();
+      return d['bot_url'] as String?;
+    } catch (e) {
+      _error = e.toString();
+      return null;
+    } finally {
+      _tgLoading = false;
       notifyListeners();
     }
   }

@@ -27,6 +27,10 @@ class Settings(BaseSettings):
 
     # Admin secret for admin endpoints
     ADMIN_SECRET: str = ""
+    # Agent secret for Felix bot (POST /support/agent-message)
+    AGENT_SECRET: str = ""
+    # Telegram bot username (without @) for link generation
+    TELEGRAM_BOT_USERNAME: str = "SafeBypass_bot"
 
     def cors_list(self) -> List[str]:
         if not self.CORS_ORIGINS:

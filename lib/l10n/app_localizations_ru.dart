@@ -419,6 +419,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get linkTelegramBtn => '🔗 Привязать Telegram';
+
+  @override
   String get promoCodeLabel => 'Есть промокод?';
 
   @override

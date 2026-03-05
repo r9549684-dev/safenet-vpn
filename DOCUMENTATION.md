@@ -223,10 +223,24 @@ C:\safenet_vpn\
 | quarterly | $14.99 |
 | yearly | $29.99 |
 
+### Telegram Link-Token *(добавлено 05.03.2026)*
+- `POST /users/telegram-link-token` *(Bearer JWT)* — генерирует 6-симв. токен (TTL 10 мин), возвращает `{token, bot_url, expires_at}`
+- `POST /users/link-telegram` *(X-Admin-Secret)* — `{token, telegram_id}` → связывает telegram_id с аккаунтом, очищает токен
+
+**Сценарий:** Flutter-кнопка "🔗 Привязать Telegram" → `POST /users/telegram-link-token` → открывает `https://t.me/SafeBypass_bot?start={token}` → бот вызывает `POST /users/link-telegram` → аккаунты связаны.
+
 ### Admin API *(добавлено 05.03.2026)* — X-Admin-Secret: safenet_admin_2026
 - `GET /admin/stats` — дашборд: total/trial_active/premium/expired по странам + revenue
 - `GET /admin/users?status=trial_active|premium|expired&country=AE&page=1` — список с пагинацией
 - `GET /admin/users/lookup?device_id=<UUID>` — полная карточка: статус, days_left, последние 10 инвойсов, последние 5 подключений
+- `GET /admin/users/by-telegram?tg_id=<ID>` *(добавлено 05.03.2026)* — карточка пользователя по telegram_id
+
+### Payments Admin API *(добавлено 05.03.2026)* — X-Admin-Secret: safenet_admin_2026
+- `POST /payments/admin/create-invoice` — создать CryptoBot-инвойс от имени бота
+  - Body: `{"tg_id": 123456789, "plan": "monthly", "country": "AE"}` (или `device_id` вместо `tg_id`)
+  - Ответ: `{invoice_id, pay_url, amount_usd, amount_local, currency, expires_at}`
+
+**Назначение:** бот `@SafeBypass_bot` использует эти эндпоинты для создания инвойса без JWT.
 
 ---
 
@@ -287,6 +301,8 @@ C:\safenet_vpn\
 - `0003_add_affiliate_system` — affiliate-поля в `users`, `referral_transactions`, `withdrawal_requests`
 - `0004_add_promocodes` — таблицы `promo_codes`, `promo_code_redemptions` *(24.02.2026)*
 - `0005_add_support` — таблицы `support_sessions`, `support_messages` *(25.02.2026)*
+- `0006_add_post_trial_limit` — ограничение сессий после триала
+- `0007_add_telegram_link` — поля `telegram_id BIGINT unique`, `link_token VARCHAR(10)`, `link_token_expires DATETIME` в таблице `users` *(05.03.2026)*
 
 ### Переменные окружения (.env ключи)
 | Ключ | Значение (prod) | Описание |
@@ -295,7 +311,8 @@ C:\safenet_vpn\
 | `AGENT_SECRET` | `safenet_agent_felix_2026` | X-Agent-Secret для POST /support/agent-message (Felix) |
 | `CRYPTOBOT_TOKEN` | (в .env) | Токен CryptoBot |
 | `SECRET_KEY` | (в .env) | JWT signing key |
-| `TRIAL_DAYS` | `7` | Длительность триала |
+| `TRIAL_DAYS` | `3` | Длительность триала |
+| `TELEGRAM_BOT_USERNAME` | `SafeBypass_bot` | Username бота (без @) для link-token URL |
 
 ---
 

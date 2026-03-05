@@ -419,6 +419,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get linkTelegramBtn => '🔗 Link Telegram';
+
+  @override
   String get promoCodeLabel => 'Have a promo code?';
 
   @override

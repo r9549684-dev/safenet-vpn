@@ -15,4 +15,7 @@ class SubscriptionRepository {
 
   Future<Map<String, dynamic>> getStatus() =>
       _api.get<Map<String, dynamic>>(Endpoints.subStatus);
+
+  Future<Map<String, dynamic>> generateTelegramLinkToken() =>
+      _api.post<Map<String, dynamic>>(Endpoints.telegramLinkToken);
 }

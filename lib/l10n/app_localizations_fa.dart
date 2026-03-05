@@ -419,6 +419,9 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get linkTelegramBtn => '🔗 اتصال به تلگرام';
+
+  @override
   String get promoCodeLabel => 'کد تخفیف دارید?';
 
   @override

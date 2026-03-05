@@ -18,6 +18,7 @@ from app.api import (
     support_router,
     version_router,
     admin_router,
+    payments_admin_router,
 )
 
 setup_logging(settings.DEBUG)
@@ -58,3 +59,4 @@ app.include_router(promocodes_router)
 app.include_router(support_router)
 app.include_router(version_router)
 app.include_router(admin_router)
+app.include_router(payments_admin_router)

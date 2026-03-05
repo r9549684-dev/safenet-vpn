@@ -889,6 +889,12 @@ abstract class AppLocalizations {
   /// **'✓ Premium for {months} months activated!'**
   String promoCodeSuccess(int months);
 
+  /// No description provided for @linkTelegramBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'🔗 Link Telegram'**
+  String get linkTelegramBtn;
+
   /// No description provided for @promoCodeLabel.
   ///
   /// In en, this message translates to:

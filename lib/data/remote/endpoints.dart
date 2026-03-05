@@ -15,6 +15,9 @@ class Endpoints {
       country.isEmpty ? '/subscriptions/purchase/$plan' : '/subscriptions/purchase/$plan?country=$country';
   static const subStatus = '/subscriptions/status';
 
+  // Telegram linking
+  static const telegramLinkToken = '/users/telegram-link-token';
+
   // Promo codes
   static const redeemPromo = '/promocodes/redeem';
 

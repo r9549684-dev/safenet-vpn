@@ -146,6 +146,7 @@
   "@promoCodeSuccess": {
     "placeholders": { "months": { "type": "int" } }
   },
+  "linkTelegramBtn": "🔗 اتصال به تلگرام",
   "promoCodeLabel": "کد تخفیف دارید?",
 
   "serversTitle": "سرورها",

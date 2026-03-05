@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import String, Boolean, DateTime, Numeric, Integer
+from sqlalchemy import BigInteger, String, Boolean, DateTime, Numeric, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -32,6 +32,11 @@ class User(Base):
     paid_referrals_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     next_payment_discount: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, default=Decimal("0"))
     post_trial_connect_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Telegram integration
+    telegram_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True, unique=True)
+    link_token: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    link_token_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     @property
     def is_trial(self) -> bool:

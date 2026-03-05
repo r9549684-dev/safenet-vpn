@@ -909,6 +909,40 @@ class _PremiumTabState extends State<_PremiumTab> {
               );
             },
           ),
+          const SizedBox(height: 10),
+          Consumer<SubscriptionProvider>(
+            builder: (ctx, sub, _) {
+              return SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: sub.isTgLoading ? null : () async {
+                    final url = await sub.linkTelegram();
+                    if (url != null && ctx.mounted) {
+                      final uri = Uri.tryParse(url);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    } else if (sub.error != null && ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text(sub.error!), backgroundColor: AppTheme.error),
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2AABEE), width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: sub.isTgLoading
+                      ? const SizedBox(width: 20, height: 20,
+                          child: CircularProgressIndicator(color: Color(0xFF2AABEE), strokeWidth: 2))
+                      : Text(l.linkTelegramBtn,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
+                            color: Color(0xFF2AABEE))),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 12),
           Text(l.safePayment,
             style: const TextStyle(fontSize: 10, color: AppTheme.textMuted,
@@ -1744,6 +1778,38 @@ class _PaymentSheetState extends State<_PaymentSheet> {
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900,
                               color: Colors.white)),
                   ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Consumer<SubscriptionProvider>(
+              builder: (ctx, sub, _) => SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: sub.isTgLoading ? null : () async {
+                    final url = await sub.linkTelegram();
+                    if (url != null && ctx.mounted) {
+                      final uri = Uri.tryParse(url);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    } else if (sub.error != null && ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text(sub.error!), backgroundColor: AppTheme.error),
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2AABEE), width: 1.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: sub.isTgLoading
+                      ? const SizedBox(width: 18, height: 18,
+                          child: CircularProgressIndicator(color: Color(0xFF2AABEE), strokeWidth: 2))
+                      : Text(l.linkTelegramBtn,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
+                            color: Color(0xFF2AABEE))),
                 ),
               ),
             ),

@@ -188,7 +188,30 @@ async def list_users(
     }
 
 
-# ── GET /admin/stats ───────────────────────────────────────────────────────────
+# ── GET /admin/users/by-telegram ─────────────────────────────────────────
+
+@router.get("/users/by-telegram", dependencies=[Depends(require_admin)])
+async def get_user_by_telegram(
+    tg_id: int,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Поиск пользователя по telegram_id.
+    Используется @SafeBypass_bot для оплаты и проверки статуса.
+    Если пользователь не привязал Telegram — 404,
+    бот должен предложить привязать через SafeNet-приложение.
+    """
+    result = await session.execute(
+        select(User).where(User.telegram_id == tg_id)
+    )
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(404, "User not linked to this Telegram account")
+
+    return _user_card(user)
+
+
+# ── GET /admin/stats ───────────────────────────────────────────────
 
 @router.get("/stats", dependencies=[Depends(require_admin)])
 async def get_stats(
