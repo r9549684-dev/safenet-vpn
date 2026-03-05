@@ -1,17 +1,29 @@
-# safenet_vpn
+# SafeNet VPN
 
-A new Flutter project.
+VPN-сервис для обхода цензуры. Flutter (Android) + FastAPI backend. Поддержка WireGuard, AmneziaWG, VLESS+Reality+Fragment (sing-box), ByeDPI.
 
-## Getting Started
+## Рынки
+- **ОАЭ** — основной активный рынок (Etisalat/Du DPI, высокая платёжеспособность)
+- **Иран** — на паузе (блокаут ~1% с 28.02.2026, возобновление после Новруза ~20.03.2026)
+- **Турция** — в плане
 
-This project is a starting point for a Flutter application.
+## Быстрый старт
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+# Backend (Docker)
+cd infra && docker compose up -d
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+# Flutter
+flutter pub get
+flutter run
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Сборка APK
+.\build_standard.ps1   # обычный
+.\build_iran.ps1       # Иран (bundleSingbox=true, страна=IR)
+.\build_china.ps1      # Китай/ОАЭ (bundleSingbox=true, страна=AE)
+```
+
+## API
+- **Prod:** https://api.loveaibot.net
+- **Direct:** http://89.208.107.67:8500
+- **Docs:** [DOCUMENTATION.md](./DOCUMENTATION.md)

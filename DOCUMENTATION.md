@@ -10,25 +10,42 @@ SafeNet VPN — кроссплатформенное приложение (Flutt
 C:\safenet_vpn\
 ├── backend/
 │   ├── app/
-│   │   ├── api/          # Роутеры: auth, users, vpn, payments, affiliate, promocodes, servers, profiles, support, version
-│   │   ├── models/       # SQLAlchemy ORM-модели (см. ниже)
+│   │   ├── api/          # auth, users, vpn, payments, subscriptions, affiliate,
+│   │   │                #  promocodes, servers, profiles, support, admin, version
+│   │   ├── models/       # SQLAlchemy ORM-модели
 │   │   ├── schemas/      # Pydantic-схемы
-│   │   ├── services/     # Бизнес-логика: wireguard, xray, cryptobot, affiliate, entitlements
+│   │   ├── services/     # wireguard, xray, cryptobot, affiliate, entitlements
 │   │   ├── utils/        # security, idempotency
 │   │   ├── config.py     # Settings (pydantic-settings, .env)
 │   │   └── main.py
-│   ├── alembic/versions/ # Миграции: 0001_init → 0002 → 0003 → 0004
+│   ├── alembic/versions/ # Миграции: 0001→0005
 │   └── requirements.txt
 ├── infra/
 │   ├── docker-compose.yml
 │   ├── Caddyfile
-│   └── .env              # Продакшн-конфигурация
+│   ├── .env              # Продакшн-конфигурация
+│   └── .env.example      # Шаблон (ADMIN_SECRET, AGENT_SECRET, …)
 ├── lib/
-│   ├── screens/          # Экраны: home, servers, affiliate, support, onboarding…
-│   ├── providers/        # State management (Provider)
-│   ├── services/         # update_checker.dart, …
-│   └── l10n/             # Сгенерированные файлы локализации
-├── android/              # Нативный Kotlin (AmneziaWG, ByeDPI, Xray)
+│   ├── core/
+│   │   ├── config_cache_service.dart  # Очередь 3 слота + WG-кэш
+│   │   ├── singbox_vpn.dart           # sing-box: fetch/failover/consumeAndRefresh
+│   │   ├── pricing_service.dart       # Гео-цены из /subscriptions/pricing
+│   │   ├── hiddify_installer.dart     # Распаковка sing-box бинарника
+│   │   └── constants.dart
+│   ├── screens/          # home, servers, affiliate, support, onboarding…
+│   ├── providers/        # vpn_provider.dart, auth_provider.dart, subscription_provider.dart
+│   ├── services/         # update_checker.dart
+│   └── l10n/             # ARB + сгенерированные файлы (en/ru/fa)
+├── android/
+│   └── app/src/main/kotlin/com/safenet/vpn/
+│       ├── MainActivity.kt
+│       └── SingboxVpnService.kt       # Foreground service для sing-box
+├── assets/
+│   ├── singbox/          # sing-box-arm64, tun2socks-arm64
+│   └── hiddify/          # hiddify.apk (резерв)
+├── build_standard.ps1    # Сборка стандартного APK
+├── build_iran.ps1        # Сборка APK для Ирана (bundleSingbox=true, country=IR)
+├── build_china.ps1       # Сборка APK для ОАЭ/Китай (bundleSingbox=true, country=AE)
 └── pubspec.yaml
 ```
 
@@ -75,7 +92,7 @@ C:\safenet_vpn\
 |---|---|
 | `country` | Код страны (RU, TR, AE…) |
 | `host` | IP/домен сервера |
-| `port` | WireGuard UDP-порт (default 51820) |
+| `port` | WireGuard UDP-порт (443 UDP — изменён с 51820 25.02.2026) |
 | `is_active` | Активен ли сервер |
 | `priority` | Приоритет при выборе |
 | `meta` | JSON: публичный ключ WireGuard, тип узла |
@@ -168,10 +185,10 @@ C:\safenet_vpn\
 - `POST /affiliate/admin/withdrawals/{id}/reject` *(X-Admin-Secret)*
 
 ### Промокоды *(добавлено 24.02.2026)*
-- `POST /promocodes/admin/create` *(X-Admin-Secret)* — создать промокод (`kind`, `code?`, `expires_at?`)
+- `POST /promocodes/admin/create` *(X-Admin-Secret)* — создать промокод
 - `GET /promocodes/admin/list` *(X-Admin-Secret)* — список всех промокодов
 - `POST /promocodes/admin/{code}/revoke` *(X-Admin-Secret)* — отозвать
-- `POST /promocodes/redeem` *(Bearer JWT)* — активировать промокод → выдаёт premium
+- `POST /promocodes/redeem` *(Bearer JWT)* — активировать → выдаёт premium
 
 ### Версия приложения *(добавлено 25.02.2026)*
 - `GET /app/version` *(публичный)* — текущая версия APK для in-app чекера обновлений
@@ -182,7 +199,34 @@ C:\safenet_vpn\
   "download_url": "http://89.208.107.67:8500/static/safenet-latest.apk",
   "changelog": "..." }
 ```
-Чтобы принудить пользователей обновиться: поднять `version_code` в `backend/app/api/version.py` и установить `force_update=True`, затем пересобрать API-контейнер.
+Чтобы принудить обновить: поднять `version_code` в `backend/app/api/version.py`, `force_update=True`, пересобрать образ.
+
+### Подписки с гео-ценами *(обновлено 05.03.2026)*
+- `GET /subscriptions/pricing` — глобальные цены (обратная совместимость)
+- `GET /subscriptions/pricing?country=AE` — цены для ОАЭ в USD + AED
+- `GET /subscriptions/pricing?country=TR` — цены для Турции в USD + TRY
+- `POST /subscriptions/purchase/{plan}?country=AE` — инвойс по гео-цене
+
+**Цены ОАЭ (geo_mult 1.6678):**
+| Тариф | USD | AED |
+|---|---|---|
+| weekly | $4.99 | ~18 |
+| monthly | $9.99 | ~37 |
+| quarterly | $24.99 | ~92 |
+| yearly | $49.99 | ~183 |
+
+**Глобальные цены:**
+| Тариф | USD |
+|---|---|
+| weekly | $2.99 |
+| monthly | $5.99 |
+| quarterly | $14.99 |
+| yearly | $29.99 |
+
+### Admin API *(добавлено 05.03.2026)* — X-Admin-Secret: safenet_admin_2026
+- `GET /admin/stats` — дашборд: total/trial_active/premium/expired по странам + revenue
+- `GET /admin/users?status=trial_active|premium|expired&country=AE&page=1` — список с пагинацией
+- `GET /admin/users/lookup?device_id=<UUID>` — полная карточка: статус, days_left, последние 10 инвойсов, последние 5 подключений
 
 ---
 
@@ -229,7 +273,7 @@ C:\safenet_vpn\
 - `infra-caddy-1` — Caddy (80/443, SSL для `api.loveaibot.net`)
 
 ### WireGuard
-- Интерфейс: `wg0`, пул: `10.8.0.1/24`, порт: `51820/UDP`
+- Интерфейс: `wg0`, пул: `10.8.0.1/24`, порт: **`443/UDP`** (изменён с 51820, 25.02.2026 — операторы IR/AE/TR блокировали 51820)
 - Управление пирами: `wg-manager.py` (systemd, `172.18.0.1:9876`)
 - Лимиты скорости: trial → 3 Мбит/с, premium → 10 Мбит/с (tc htb)
 
@@ -244,18 +288,77 @@ C:\safenet_vpn\
 - `0004_add_promocodes` — таблицы `promo_codes`, `promo_code_redemptions` *(24.02.2026)*
 - `0005_add_support` — таблицы `support_sessions`, `support_messages` *(25.02.2026)*
 
+### Переменные окружения (.env ключи)
+| Ключ | Значение (prod) | Описание |
+|---|---|---|
+| `ADMIN_SECRET` | `safenet_admin_2026` | X-Admin-Secret для /admin/* и /affiliate/admin/* |
+| `AGENT_SECRET` | `safenet_agent_felix_2026` | X-Agent-Secret для POST /support/agent-message (Felix) |
+| `CRYPTOBOT_TOKEN` | (в .env) | Токен CryptoBot |
+| `SECRET_KEY` | (в .env) | JWT signing key |
+| `TRIAL_DAYS` | `7` | Длительность триала |
+
 ---
 
 ## 📱 Мобильное приложение (Flutter / Android)
 
 - **Auth:** Device ID (без пароля)
-- **VPN:** AmneziaWG (основной) + VLESS+Reality (fallback)
-- **ByeDPI:** SOCKS5-прокси для обхода DPI (foreground service)
-- **Payments:** CryptoBot Web URL
+- **VPN:** 3 режима (см. ниже)
+- **Payments:** CryptoBot Web URL (гео-цены)
 - **Affiliate:** реферальная ссылка, QR-код, статистика
 - **Доступ:**
-  - Trial: 3 дня полного доступа (после — 403)
+  - Trial: 7 дней (после — 403)
   - Premium: полный доступ (10 Мбит/с)
+
+### Режимы VPN (кнопки на главном экране)
+
+| Кнопка | Внутреннее | Протокол | Файл |
+|---|---|---|---|
+| **Максимальный режим** | `maximum` / hybrid | VLESS+Reality+Fragment (sing-box) | `singbox_vpn.dart` |
+| **Тунель** | `tunnel` / amnezia | AmneziaWG / WireGuard | `vpn_provider.dart` |
+| **Супер** | `super` / byedpi | ByeDPI SOCKS5 + WireGuard | `vpn_provider.dart` |
+
+### Sing-box (Максимальный режим) *(добавлено 03.03.2026)*
+
+`lib/core/singbox_vpn.dart` + `SingboxVpnService.kt` (foreground service)
+
+**Флаг сборки:** `const bundleSingbox = bool.fromEnvironment('BUNDLE_HIDDIFY', defaultValue: false)`  
+Если `true` — использует bundled бинарник (`assets/singbox/sing-box-arm64`).
+
+**Жизненный цикл:**
+1. `fetchConfig(token, country)` — берёт конфиг из головы очереди (`dequeue`) или из сети
+2. `start(config)` → если `false` — failover: берёт следующий из очереди, повторная попытка
+3. После успешного старта: `consumeAndRefreshCache(token, country)` — fire-and-forget фоновое пополнение
+
+### Горячий запас конфигов *(добавлено 03.03.2026)*
+
+`lib/core/config_cache_service.dart`
+
+**Очередь 3 слота** (`spare_config_<COUNTRY>_0/1/2` в EncryptedSharedPreferences):
+- `dequeue(country)` — взять из головы, сдвинуть очередь
+- `enqueue(country, config)` — добавить в хвост
+- `queueLength(country)` — количество живых слотов
+- `preload(token, country)` — заполнить очередь до 3 при старте
+- `consumeAndRefresh(token, country)` — уведомить сервер + фоново enqueue
+
+**WG-кэш** (`wg_config_<serverId>`, TTL 48ч):
+- `saveWgCache(serverId, wgConfig)` — после успешного WG-подключения
+- `getWgCache(serverId)` — при падении сети (офлайн-подключение)
+
+**Сценарии восстановления:**
+| Ситуация | Время |
+|---|---|
+| Очередь есть | 0 мс |
+| Очередь пуста | ~2 сек (API) |
+| Sing-box упал, след. конфиг в очереди | ~1 сек (failover) |
+| WG-сеть упала, кэш есть | 0 мс |
+
+### Варианты APK
+
+| Скрипт | Флаги | Назначение |
+|---|---|---|
+| `build_standard.ps1` | — | Стандартный (~29 МБ) |
+| `build_iran.ps1` | `BUNDLE_HIDDIFY=true, country=IR` | Иран (~50 МБ, sing-box внутри) |
+| `build_china.ps1` | `BUNDLE_HIDDIFY=true, country=AE` | ОАЭ/Китай (~50 МБ, sing-box внутри) |
 - Зависимость: `libs/amneziawg.aar` (нативная библиотека)
 
 ### 🏠 Редизайн главного экрана *(добавлено 25.02.2026)*
@@ -431,23 +534,66 @@ Flutter → [Cloudflare Tunnel → телефон (Termux + Python)]
 |---|---|---|---|
 | `GET` | `/support/sessions/active?lang=ru` | Flutter | Активная сессия или авто-создание |
 | `POST` | `/support/sessions` | Flutter | Явное создание сессии |
-| `POST` | `/support/messages` | Агент | Сохранить сообщение (`role: user|agent`) |
-| `GET` | `/support/history?session_id=&limit=50` | Агент | История сообщений сессии |
+- `POST` | `/support/messages` | Flutter (JWT) | Сохранить сообщение пользователя (role=user) |
+| `POST` | `/support/agent-message` | Felix (X-Agent-Secret) | Ответ агента (role=agent автоматически) |
+| `GET` | `/support/history?session_id=&limit=50` | Flutter | История сообщений сессии |
 | `POST` | `/support/sessions/{id}/resolve` | Агент | Закрыть сессию |
 | `POST` | `/support/sessions/{id}/rate` | Flutter | Оценка 1–5 |
 
-**Нюанс:** `GET /sessions/active` — единственный вызов Flutter при открытии чата. Агент сохраняет оба сообщения: `role=user` → `role=agent` за один оборот.
+**Аутентификация:**
+- Пользователи (Flutter): `Authorization: Bearer <JWT>`
+- Felix-бот: `X-Agent-Secret: safenet_agent_felix_2026`
 
-### Cloudflare Tunnel (телефон агента)
-
-```bash
-# Termux:
-pkg install cloudflared
-cloudflared tunnel login
-cloudflared tunnel create support-agent
-cloudflared tunnel run support-agent
-# → статичный URL прописывается в Flutter-конфиг
+**Felix (@SafeBypass_bot — SEIFY AI + RAG):**
 ```
+Пользователь → POST /support/messages (JWT)
+    → backend форвардит в Telegram Bot API (chat_id оператора) ← ожидается от Felix
+    → Felix (RAG-ответ) → POST /support/agent-message (X-Agent-Secret)
+    → Flutter polling GET /support/history каждые 3 сек
+```
+⏳ Ожидается от Felix: `chat_id` служебного Telegram-чата операторов.
+
+---
+
+## 🌍 Рынки
+
+### ОАЭ — основной рынок *(выбран 05.03.2026)*
+- **Статус:** активен, приоритетный
+- **Причина:** 65.78% VPN-проникновение, 88% экспатов, DPI-цензура (не BGP), высокая покупательная способность
+- **Ценообразование:** $4.99/нед · $9.99/мес · $24.99/кварт · $49.99/год (geo_mult 1.6678)
+- **Местная валюта:** AED (дирхам, fx_rate ~3.67)
+- **Онбординг:** отдельный EN-флоу (build_china.ps1, country=AE, bundleSingbox=true)
+- **Поддержка:** Felix в режиме EN + RAG-база по AE
+
+### Иран — пауза
+- **Статус:** приостановлен с 28.02.2026
+- **Причина:** BGP-shutdown (операторы IR вырезаны из глобального интернета на BGP-уровне, ~1% связности). VPN не работает на BGP-уровне.
+- **Технический стек для IR:** build_iran.ps1 (bundleSingbox=true, sing-box VLESS+Reality+Fragment) — готов к возобновлению при восстановлении связности
+- **Мониторинг:** https://ioda.inetintel.cc.gatech.edu/
+
+### Турция — планируется
+- **Статус:** в бэкенде поддержан (geo_mult=0.8330, TRY)
+- **Ценообразование:** рассчитывается автоматически по geo_mult
+- **Старт:** после стабилизации ОАЭ
+
+---
+
+## 🤝 Felix — интеграция AI-поддержки
+
+- **Бот:** @SafeBypass_bot (Telegram, SEIFY AI + LightRAG + DocLing)
+- **Роль:** RAG-агент поддержки (отвечает на вопросы пользователей через чат в приложении)
+- **Токен:** `AGENT_SECRET=safenet_agent_felix_2026` (в `infra/.env`)
+- **Эндпоинт ответа:** `POST /support/agent-message` (X-Agent-Secret)
+- **Файл общения:** `C:\Users\53\Felix\Разработчики\Файл общения разработчиков впн и техподд.md`
+
+**Статус интеграции:**
+| Шаг | Статус |
+|---|---|
+| `POST /support/agent-message` эндпоинт | ✅ готов |
+| `AGENT_SECRET` передан Felix | ✅ передан |
+| RAG-база AE (EN) | ⏳ Felix готовит |
+| `chat_id` Telegram-чата операторов | ⏳ ожидается от Felix |
+| Flutter UI чата | ⏳ в разработке |
 
 ---
 
