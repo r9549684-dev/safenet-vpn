@@ -26,6 +26,7 @@
   "@badgeTrial": {
     "placeholders": { "days": { "type": "int" } }
   },
+  "badgeExpired": "EXPIRED",
   "removeLimit": "💎 Remove limit — Premium",
 
   "bypassModeLabel": "BYPASS MODE",
@@ -43,6 +44,7 @@
   "statsPing": "Ping",
 
   "trialLastDay": "🔴 Last trial day!",
+  "trialExpiredBanner": "🔴 Trial expired!",
   "trialFewDays": "🟡 {days} trial days left",
   "@trialFewDays": {
     "placeholders": { "days": { "type": "int" } }
@@ -175,13 +177,13 @@
   "supportNavTitle": "Support",
   "supportNavSubtitle": "FAQ · AI agent",
   "supportTitle": "Support",
-  "supportSubtitle": "FAQ and AI agent coming soon",
-  "supportTelegramTitle": "Contact support",
+  "supportSubtitle": "FAQ, AI agent and Telegram support",
+  "supportTelegramTitle": "Contact support via Telegram",
   "supportTelegramDesc": "Telegram · Fast replies",
   "supportFaqTitle": "FAQ",
-  "supportFaqDesc": "Knowledge base coming soon",
+  "supportFaqDesc": "Answers to common questions",
   "supportAiTitle": "AI Support Agent",
-  "supportAiDesc": "Smart assistant coming soon",
+  "supportAiDesc": "Smart assistant in Telegram",
   "supportComingSoon": "SOON",
 
   "homeEarnTitle": "Earn with us",

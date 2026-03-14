@@ -23,6 +23,7 @@
   "btnRetry": "RETRY",
   "badgePremium": "PREMIUM ✓",
   "badgeTrial": "ТРИАЛ: {days} ДНЕЙ",
+  "badgeExpired": "ИСТЁК",
   "removeLimit": "💎 Убрать ограничение — Premium",
 
   "bypassModeLabel": "РЕЖИМ ОБХОДА",
@@ -40,6 +41,7 @@
   "statsPing": "Пинг",
 
   "trialLastDay": "🔴 Последний день триала!",
+  "trialExpiredBanner": "🔴 Триал окончен!",
   "trialFewDays": "🟡 Осталось {days} дня триала",
   "trialManyDays": "⏳ Триал: {days} дней",
   "trialActiveDesc": "Во время триала: безлимит как Premium",
@@ -157,13 +159,13 @@
   "supportNavTitle": "Техподдержка",
   "supportNavSubtitle": "FAQ · AI-агент",
   "supportTitle": "Техподдержка",
-  "supportSubtitle": "FAQ и AI-агент подключим позже",
-  "supportTelegramTitle": "Написать в поддержку",
+  "supportSubtitle": "FAQ, AI-агент и поддержка в Telegram",
+  "supportTelegramTitle": "Написать в поддержку через Telegram",
   "supportTelegramDesc": "Telegram · Ответим быстро",
   "supportFaqTitle": "Часто задаваемые вопросы",
-  "supportFaqDesc": "База знаний скоро откроется",
+  "supportFaqDesc": "Ответы на популярные вопросы",
   "supportAiTitle": "AI-агент поддержки",
-  "supportAiDesc": "Умный помощник скоро будет доступен",
+  "supportAiDesc": "Умный помощник в Telegram",
   "supportComingSoon": "СКОРО",
 
   "homeEarnTitle": "Зарабатывай с нами",

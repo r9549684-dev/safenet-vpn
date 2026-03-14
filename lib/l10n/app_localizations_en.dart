@@ -71,6 +71,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get badgeExpired => 'EXPIRED';
+
+  @override
   String get removeLimit => '💎 Remove limit — Premium';
 
   @override
@@ -111,6 +114,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trialLastDay => '🔴 Last trial day!';
+
+  @override
+  String get trialExpiredBanner => '🔴 Trial expired!';
 
   @override
   String trialFewDays(int days) {
@@ -446,10 +452,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supportTitle => 'Support';
 
   @override
-  String get supportSubtitle => 'FAQ and AI agent coming soon';
+  String get supportSubtitle => 'FAQ, AI agent and Telegram support';
 
   @override
-  String get supportTelegramTitle => 'Contact support';
+  String get supportTelegramTitle => 'Contact support via Telegram';
 
   @override
   String get supportTelegramDesc => 'Telegram · Fast replies';
@@ -458,13 +464,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supportFaqTitle => 'FAQ';
 
   @override
-  String get supportFaqDesc => 'Knowledge base coming soon';
+  String get supportFaqDesc => 'Answers to common questions';
 
   @override
   String get supportAiTitle => 'AI Support Agent';
 
   @override
-  String get supportAiDesc => 'Smart assistant coming soon';
+  String get supportAiDesc => 'Smart assistant in Telegram';
 
   @override
   String get supportComingSoon => 'SOON';

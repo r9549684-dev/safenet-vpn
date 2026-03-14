@@ -242,16 +242,23 @@ class _HomeTab extends StatelessWidget {
               Consumer<AuthProvider>(
                 builder: (ctx, auth, _) {
                   final user = auth.user;
-                  final label = user == null
-                      ? ''
-                      : user.isPremium
-                          ? l.badgePremium
-                          : l.badgeTrial(user.trialDaysLeft);
-                  if (label.isEmpty) return const SizedBox.shrink();
+                  if (user == null) return const SizedBox.shrink();
+                  final String label;
+                  final List<Color> colors;
+                  if (user.isPremium) {
+                    label = l.badgePremium;
+                    colors = [const Color(0xFF34D399), const Color(0xFF10B981)];
+                  } else if (user.isTrialActive) {
+                    label = l.badgeTrial(user.trialDaysLeft);
+                    colors = [const Color(0xFFF59E0B), const Color(0xFFF97316)];
+                  } else {
+                    label = l.badgeExpired;
+                    colors = [AppTheme.error, const Color(0xFFDC2626)];
+                  }
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFF97316)]),
+                      gradient: LinearGradient(colors: colors),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(label,
@@ -538,7 +545,7 @@ class _HomeTab extends StatelessWidget {
                   const SizedBox(width: 10),
                   _StatCard(label: ll.statsUpload,   value: vpn.txSpeedFormatted, color: AppTheme.primary),
                   const SizedBox(width: 10),
-                  _StatCard(label: ll.statsPing,     value: '${server.ping}ms',   color: AppTheme.warning),
+                  _StatCard(label: ll.statsPing,     value: vpn.pingFormatted,     color: AppTheme.warning),
                 ]);
               },
             ),
@@ -551,11 +558,13 @@ class _HomeTab extends StatelessWidget {
               if (user == null || user.isPremium) return const SizedBox.shrink();
               final days = user.trialDaysLeft;
               final ll = AppLocalizations.of(ctx);
-              final urgency = days <= 1
-                  ? ll.trialLastDay
-                  : days <= 3
-                      ? ll.trialFewDays(days)
-                      : ll.trialManyDays(days);
+              final urgency = !user.isTrialActive
+                  ? ll.trialExpiredBanner
+                  : days <= 1
+                      ? ll.trialLastDay
+                      : days <= 3
+                          ? ll.trialFewDays(days)
+                          : ll.trialManyDays(days);
               return Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: GestureDetector(
@@ -1092,7 +1101,11 @@ class _SettingsTabState extends State<_SettingsTab> {
         final expiryStr = user?.trialEndsAt != null
             ? DateFormat('d MMM yyyy, HH:mm', 'ru').format(user!.trialEndsAt!)
             : '—';
-        final badgeLabel = (user?.isPremium ?? false) ? 'PREMIUM' : 'TRIAL';
+        final badgeLabel = (user?.isPremium ?? false)
+            ? 'PREMIUM'
+            : (user?.isTrialActive ?? false)
+                ? 'TRIAL'
+                : 'EXPIRED';
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),

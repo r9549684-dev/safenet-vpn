@@ -601,21 +601,47 @@ Flutter → [Cloudflare Tunnel → телефон (Termux + Python)]
 
 ---
 
-## 🤝 Felix — интеграция AI-поддержки
+## 🤝 Felix — интеграция AI-поддержки *(обновлено 14.03.2026)*
 
-- **Бот:** @SafeBypass_bot (Telegram, SEIFY AI + LightRAG + DocLing)
-- **Роль:** RAG-агент поддержки (отвечает на вопросы пользователей через чат в приложении)
+- **Бот:** @SafeBypass_bot (Telegram, SEIFY AI + LightRAG + FAQ fallback)
+- **Роль:** RAG-агент поддержки (отвечает на вопросы пользователей через Telegram + чат в приложении)
 - **Токен:** `AGENT_SECRET=safenet_agent_felix_2026` (в `infra/.env`)
 - **Эндпоинт ответа:** `POST /support/agent-message` (X-Agent-Secret)
 - **Файл общения:** `C:\Users\53\Felix\Разработчики\Файл общения разработчиков впн и техподд.md`
+- **Локальный проект:** `C:\Users\53\Felix\`
+
+### SEIFY AI — интеграция в Telegram-бот *(добавлено 14.03.2026)*
+
+**Файлы:**
+- `scripts/telegram_bot.py` — бот (aiogram 3) + SEIFY AI обработчик свободных сообщений
+- `scripts/ai_agent.py` — SafeVPNAgent (TopicFilter, DialogueMemory, RAG, Admin API lookup, Account Card)
+- `scripts/seify_uae_exam.py` — UAE-экзамен (теперь с реальным SEIFY Agent)
+
+**Функции бота:**
+- Команды: /start, /help, /pay, /download, /unlink + callback confirm/cancel link
+- Свободные сообщения → SEIFY AI:
+  - UUID в тексте → карточка аккаунта (`GET /admin/users/lookup`)
+  - VPN-вопрос → RAG-поиск (LightRAG или FAQ keyword fallback)
+  - Off-topic → блокировка с предложением VPN-тем
+- Автоопределение языка: RU/EN/FA/TR/AR
+- Feedback кнопки 👍/👎 для обучения
+
+**FAQ база знаний (10 документов):**
+- 7 FAQ по странам (IR/TR/AE на RU/EN/FA/TR/AR)
+- 2 протокола (RU/EN)
+- 1 General FAQ EN (новый 14.03.2026 — download, pricing, iOS, refund, multi-device, legality UAE, encryption, referral)
 
 **Статус интеграции:**
 | Шаг | Статус |
 |---|---|
 | `POST /support/agent-message` эндпоинт | ✅ готов |
 | `AGENT_SECRET` передан Felix | ✅ передан |
-| RAG-база AE (EN) | ⏳ Felix готовит |
-| `chat_id` Telegram-чата операторов | ⏳ ожидается от Felix |
+| SEIFY AI интегрирован в бот | ✅ готово (14.03.2026) |
+| FAQ база знаний (10 доков, 5 языков) | ✅ готово |
+| Синтаксис бота исправлен (стр. 281) | ✅ исправлено |
+| UAE-экзамен: реальный SEIFY Agent | ✅ готово |
+| Локальный тест бота | ⏳ следующий шаг |
+| Деплой на сервер | ⏳ после теста |
 | Flutter UI чата | ⏳ в разработке |
 
 ---

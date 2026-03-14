@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config/theme.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
+import 'faq_screen.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -122,21 +123,29 @@ class SupportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // ── Скоро ────────────────────────────────────────────────────
-            _label(l.supportComingSoon),
+            // ── FAQ и AI-агент ───────────────────────────────────────────────────
+            _label('FAQ & AI'),
             const SizedBox(height: 10),
             _SupportCard(
               icon: '❓',
               title: l.supportFaqTitle,
               subtitle: l.supportFaqDesc,
-              badge: l.supportComingSoon,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FaqScreen()),
+              ),
             ),
             const SizedBox(height: 12),
             _SupportCard(
               icon: '🤖',
               title: l.supportAiTitle,
               subtitle: l.supportAiDesc,
-              badge: l.supportComingSoon,
+              onTap: () {
+                launchUrl(
+                  Uri.parse('https://t.me/safevpn_middleeast'),
+                  mode: LaunchMode.externalApplication,
+                );
+              },
             ),
           ],
         ),

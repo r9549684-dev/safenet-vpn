@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../data/repositories/server_repo.dart';
 import '../data/repositories/auth_repo.dart';
@@ -28,6 +29,8 @@ class VpnProvider extends ChangeNotifier {
   double _txSpeed = 0;
   int    _lastRxBytes = 0;
   int    _lastTxBytes = 0;
+  int    _pingMs = 0;
+  int    _pingTick = 0;
 
   // Session access control
   bool _isUnlimitedSession = false;  // true — premium/active trial, false — post-trial free
@@ -41,6 +44,8 @@ class VpnProvider extends ChangeNotifier {
   String?         get proxyAddress    => _proxyAddress;
   String          get rxSpeedFormatted => _fmtSpeed(_rxSpeed);
   String          get txSpeedFormatted => _fmtSpeed(_txSpeed);
+  int             get pingMs           => _pingMs;
+  String          get pingFormatted    => '${_pingMs}ms';
 
   static String _fmtSpeed(double bps) {
     if (bps >= 1048576) return '${(bps / 1048576).toStringAsFixed(1)} MB/s';
@@ -268,11 +273,29 @@ class VpnProvider extends ChangeNotifier {
           _rxSpeed = 0;
           _txSpeed = 0;
         }
+
+        // Измеряем пинг каждые 10 секунд
+        _pingTick++;
+        if (_pingTick % 10 == 1) {
+          _measurePing();
+        }
         notifyListeners();
         return true;
       }
       return false;
     });
+  }
+
+  /// Измерение пинга через DNS lookup (быстрый и надёжный способ)
+  Future<void> _measurePing() async {
+    try {
+      final sw = Stopwatch()..start();
+      await InternetAddress.lookup('google.com');
+      sw.stop();
+      _pingMs = sw.elapsedMilliseconds;
+    } catch (_) {
+      _pingMs = 0;
+    }
   }
 
   /// Автоотключение по истечению 5-минутной post-trial сессии.

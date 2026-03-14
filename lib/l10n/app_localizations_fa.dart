@@ -71,6 +71,9 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get badgeExpired => 'منقضی شده';
+
+  @override
   String get removeLimit => '💎 حذف محدودیت — پریمیوم';
 
   @override
@@ -111,6 +114,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get trialLastDay => '🔴 آخرین روز آزمایشی!';
+
+  @override
+  String get trialExpiredBanner => '🔴 آزمایشی منقضی شد!';
 
   @override
   String trialFewDays(int days) {
@@ -446,10 +452,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get supportTitle => 'پشتیبانی';
 
   @override
-  String get supportSubtitle => 'سؤالات متداول و هوش مصنوعی به زودی';
+  String get supportSubtitle => 'سؤالات متداول، هوش مصنوعی و پشتیبانی تلگرام';
 
   @override
-  String get supportTelegramTitle => 'تماس با پشتیبانی';
+  String get supportTelegramTitle => 'تماس با پشتیبانی از طریق تلگرام';
 
   @override
   String get supportTelegramDesc => 'تلگرام · پاسخ سریع';
@@ -458,13 +464,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get supportFaqTitle => 'سؤالات متداول';
 
   @override
-  String get supportFaqDesc => 'پایگاه دانش به زودی';
+  String get supportFaqDesc => 'پاسخ به سؤالات رایج';
 
   @override
   String get supportAiTitle => 'دستیار هوش مصنوعی';
 
   @override
-  String get supportAiDesc => 'دستیار هوشمند به زودی';
+  String get supportAiDesc => 'دستیار هوشمند در تلگرام';
 
   @override
   String get supportComingSoon => 'به زودی';

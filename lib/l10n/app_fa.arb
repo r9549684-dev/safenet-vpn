@@ -23,6 +23,7 @@
   "btnRetry": "تلاش مجدد",
   "badgePremium": "پریمیوم ✓",
   "badgeTrial": "آزمایشی: {days} روز",
+  "badgeExpired": "منقضی شده",
   "removeLimit": "💎 حذف محدودیت — پریمیوم",
 
   "bypassModeLabel": "حالت دور زدن",
@@ -40,6 +41,7 @@
   "statsPing": "پینگ",
 
   "trialLastDay": "🔴 آخرین روز آزمایشی!",
+  "trialExpiredBanner": "🔴 آزمایشی منقضی شد!",
   "trialFewDays": "🟡 {days} روز آزمایشی باقی مانده",
   "trialManyDays": "⏳ آزمایشی: {days} روز",
   "trialActiveDesc": "در دوره آزمایشی: نامحدود مثل پریمیوم",
@@ -157,13 +159,13 @@
   "supportNavTitle": "پشتیبانی",
   "supportNavSubtitle": "سؤالات متداول · هوش مصنوعی",
   "supportTitle": "پشتیبانی",
-  "supportSubtitle": "سؤالات متداول و هوش مصنوعی به زودی",
-  "supportTelegramTitle": "تماس با پشتیبانی",
+  "supportSubtitle": "سؤالات متداول، هوش مصنوعی و پشتیبانی تلگرام",
+  "supportTelegramTitle": "تماس با پشتیبانی از طریق تلگرام",
   "supportTelegramDesc": "تلگرام · پاسخ سریع",
   "supportFaqTitle": "سؤالات متداول",
-  "supportFaqDesc": "پایگاه دانش به زودی",
+  "supportFaqDesc": "پاسخ به سؤالات رایج",
   "supportAiTitle": "دستیار هوش مصنوعی",
-  "supportAiDesc": "دستیار هوشمند به زودی",
+  "supportAiDesc": "دستیار هوشمند در تلگرام",
   "supportComingSoon": "به زودی",
 
   "homeEarnTitle": "با ما کسب درآمد کنید",

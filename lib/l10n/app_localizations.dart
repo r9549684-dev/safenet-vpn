@@ -217,6 +217,12 @@ abstract class AppLocalizations {
   /// **'TRIAL: {days} DAYS'**
   String badgeTrial(int days);
 
+  /// No description provided for @badgeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPIRED'**
+  String get badgeExpired;
+
   /// No description provided for @removeLimit.
   ///
   /// In en, this message translates to:
@@ -300,6 +306,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'🔴 Last trial day!'**
   String get trialLastDay;
+
+  /// No description provided for @trialExpiredBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'🔴 Trial expired!'**
+  String get trialExpiredBanner;
 
   /// No description provided for @trialFewDays.
   ///
@@ -946,13 +958,13 @@ abstract class AppLocalizations {
   /// No description provided for @supportSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'FAQ and AI agent coming soon'**
+  /// **'FAQ, AI agent and Telegram support'**
   String get supportSubtitle;
 
   /// No description provided for @supportTelegramTitle.
   ///
   /// In en, this message translates to:
-  /// **'Contact support'**
+  /// **'Contact support via Telegram'**
   String get supportTelegramTitle;
 
   /// No description provided for @supportTelegramDesc.
@@ -970,7 +982,7 @@ abstract class AppLocalizations {
   /// No description provided for @supportFaqDesc.
   ///
   /// In en, this message translates to:
-  /// **'Knowledge base coming soon'**
+  /// **'Answers to common questions'**
   String get supportFaqDesc;
 
   /// No description provided for @supportAiTitle.
@@ -982,7 +994,7 @@ abstract class AppLocalizations {
   /// No description provided for @supportAiDesc.
   ///
   /// In en, this message translates to:
-  /// **'Smart assistant coming soon'**
+  /// **'Smart assistant in Telegram'**
   String get supportAiDesc;
 
   /// No description provided for @supportComingSoon.
