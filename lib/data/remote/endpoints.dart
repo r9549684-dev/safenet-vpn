@@ -26,6 +26,10 @@ class Endpoints {
   static const referralRewards = '/referrals/rewards';
   static const requestPayout   = '/referrals/request-payout';
 
+  // Support AI
+  static const supportAsk     = '/support/ask';
+  static const supportHistory = '/support/history';
+
   // Config Cache (горячий запас)
   static String configCached(String token, String country, {int? serverId}) {
     var url = '/config/cached/$token?country=$country';

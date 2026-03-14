@@ -6,6 +6,7 @@ import '../config/theme.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import 'faq_screen.dart';
+import 'ai_chat_screen.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -140,12 +141,10 @@ class SupportScreen extends StatelessWidget {
               icon: '🤖',
               title: l.supportAiTitle,
               subtitle: l.supportAiDesc,
-              onTap: () {
-                launchUrl(
-                  Uri.parse('https://t.me/SafeBypass_bot'),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AiChatScreen()),
+              ),
             ),
           ],
         ),
