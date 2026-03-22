@@ -21,11 +21,11 @@ class AppVersionResponse(BaseModel):
 # (pubspec.yaml: version: X.Y.Z+N, где N = version_code)
 # Чтобы принудить обновление: поднять version_code и установить force_update=True
 _CURRENT_VERSION = AppVersionResponse(
-    version="1.3.1",
-    version_code=4,
+    version="1.3.2",
+    version_code=5,
     force_update=False,
     download_url="https://api.loveaibot.net/download/app",
-    changelog="Fix: device_id сохраняется при переустановке — подписка больше не сбрасывается.",
+    changelog="Fix: реферальные ссылки исправлены. QR-код и кнопка 'Копировать' теперь работают.",
 )
 
 
