@@ -449,7 +449,7 @@ class _HomeTab extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12)),
                               child: QrImageView(
-                                data: 'https://safenetvpn.com/dl?ref=$code',
+                                data: 'https://api.loveaibot.net/download/app?ref=$code',
                                 version: QrVersions.auto,
                                 size: 80,
                                 backgroundColor: Colors.white,
@@ -469,7 +469,7 @@ class _HomeTab extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 GestureDetector(
                                   onTap: () {
-                                    final url = 'https://safenetvpn.com/dl?ref=$code';
+                                    final url = 'https://api.loveaibot.net/download/app?ref=$code';
                                     Clipboard.setData(ClipboardData(text: url));
                                     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
                                       content: Text(ll.linkCopied),

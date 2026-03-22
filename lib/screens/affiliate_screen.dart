@@ -397,7 +397,7 @@ class _QrCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (code.isEmpty) return const SizedBox.shrink();
-    final url = 'https://safenetvpn.com/dl?ref=$code';
+    final url = 'https://api.loveaibot.net/download/app?ref=$code';
     return _GlassCard(
       child: Column(children: [
         Text(AppLocalizations.of(context).qrTitle,

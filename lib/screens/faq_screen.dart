@@ -72,7 +72,7 @@ class FaqScreen extends StatelessWidget {
     {
       'category': 'Начало работы',
       'items': <Map<String, String>>[
-        {'q': 'Как скачать SafeNet VPN?', 'a': 'Скачайте APK с нашего сайта safenetvpn.com или через Telegram-бот @safevpn_middleeast. iOS версия в разработке.'},
+        {'q': 'Как скачать SafeNet VPN?', 'a': 'Скачайте APK по ссылке api.loveaibot.net/download/app или через Telegram-бот @safevpn_middleeast. iOS версия в разработке.'},
         {'q': 'Нужна ли регистрация?', 'a': 'Нет. Приложение автоматически создаёт анонимный аккаунт при первом запуске. Никаких email или паролей.'},
         {'q': 'Как подключиться к VPN?', 'a': 'Нажмите большую кнопку CONNECT на главном экране. Подключение займёт 3-5 секунд.'},
       ],
@@ -122,7 +122,7 @@ class FaqScreen extends StatelessWidget {
     {
       'category': 'Getting Started',
       'items': <Map<String, String>>[
-        {'q': 'How to download SafeNet VPN?', 'a': 'Download the APK from safenetvpn.com or via Telegram bot @safevpn_middleeast. iOS version is coming soon.'},
+        {'q': 'How to download SafeNet VPN?', 'a': 'Download the APK from api.loveaibot.net/download/app or via Telegram bot @safevpn_middleeast. iOS version is coming soon.'},
         {'q': 'Is registration required?', 'a': 'No. The app automatically creates an anonymous account on first launch. No emails or passwords needed.'},
         {'q': 'How to connect to VPN?', 'a': 'Tap the large CONNECT button on the home screen. Connection takes 3-5 seconds.'},
       ],
@@ -172,7 +172,7 @@ class FaqScreen extends StatelessWidget {
     {
       'category': 'شروع کار',
       'items': <Map<String, String>>[
-        {'q': 'چگونه SafeNet VPN را دانلود کنم؟', 'a': 'فایل APK را از safenetvpn.com یا ربات تلگرام @safevpn_middleeast دانلود کنید. نسخه iOS به زودی.'},
+        {'q': 'چگونه SafeNet VPN را دانلود کنم؟', 'a': 'فایل APK را از api.loveaibot.net/download/app یا ربات تلگرام @safevpn_middleeast دانلود کنید. نسخه iOS به زودی.'},
         {'q': 'آیا ثبت‌نام لازم است؟', 'a': 'خیر. برنامه به‌طور خودکار یک حساب ناشناس ایجاد می‌کند. بدون ایمیل یا رمز عبور.'},
         {'q': 'چگونه به VPN متصل شوم؟', 'a': 'دکمه بزرگ CONNECT را در صفحه اصلی بزنید. اتصال ۳ تا ۵ ثانیه طول می‌کشد.'},
       ],
