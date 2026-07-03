@@ -489,49 +489,6 @@ class _HomeTab extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 20),
-
-          // Bypass Modes
-          Text(l.bypassModeLabel,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-              color: AppTheme.textMuted, letterSpacing: 3)),
-          const SizedBox(height: 10),
-          Column(
-            children: [
-              _ModeCard(
-                id: 'hybrid',
-                label: 'Максимальный режим',
-                icon: Icons.rocket_launch_rounded,
-                selected: mode == 'hybrid',
-                onTap: onModeChange,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ModeCard(
-                      id: 'amnezia',
-                      label: 'Тунель',
-                      icon: Icons.lock_rounded,
-                      selected: mode == 'amnezia',
-                      onTap: onModeChange,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _ModeCard(
-                      id: 'byedpi',
-                      label: 'Супер',
-                      icon: Icons.bolt_rounded,
-                      selected: mode == 'byedpi',
-                      onTap: onModeChange,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
           if (status == VpnStatus.connected) ...[
             const SizedBox(height: 20),
             Consumer<VpnProvider>(
