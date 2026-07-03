@@ -10,9 +10,11 @@ import '../services/service_service.dart';
 import '../services/amo_pool_service.dart';
 import '../core/singbox_service.dart';
 import '../core/vless_to_singbox.dart';
+import '../core/health_checker.dart';
 import '../core/trojan_to_singbox.dart';
 import '../core/config_cache_service.dart';
 import '../core/constants.dart';
+import '../core/protocol_juggler.dart';
 
 // bundleSingbox is defined in singbox_vpn.dart, but we can access it if we import it.
 
@@ -102,6 +104,12 @@ class VpnProvider extends ChangeNotifier {
     bool isPremium = false,
     void Function()? onShowPaywall,
   }) async {
+    // Защита от повторного вызова
+    if (_status == VpnStatus.connecting) {
+      print('[VPN] connect() already in progress, ignoring duplicate call');
+      return;
+    }
+    
     print('[VPN] connect() called: mode=$mode, isPremium=$isPremium, countryCode=$countryCode');
     _isUnlimitedSession = isPremium;
     // Авто-регистрация если нет токена
@@ -203,63 +211,68 @@ class VpnProvider extends ChangeNotifier {
             );
           }
 
-          // VLESS-first: Reality+Fragment (primary_protocol = "vless")
+          // DEBUG: Логируем полный ответ от сервера
+          print('[JUGGLER] 📦 activeConfig keys: ${activeConfig.keys.toList()}');
+          print('[JUGGLER] 📦 trojan_config type: ${activeConfig['trojan_config']?.runtimeType}');
+          print('[JUGGLER] 📦 vless_config type: ${activeConfig['vless_config']?.runtimeType}');
+          print('[JUGGLER] 📦 trojan_config value: ${activeConfig['trojan_config']}');
+          print('[JUGGLER] 📦 vless_config value: ${activeConfig['vless_config']}');
+
+          // Protocol Juggler: перебор протоколов с health check
+          // Приоритет для RU: Trojan → VLESS
+          final trojanConfig = activeConfig['trojan_config'] as Map<String, dynamic>?;
           final vlessConfig = activeConfig['vless_config'] as Map<String, dynamic>?;
-          print('[VLESS] vlessConfig present: ${vlessConfig != null}, keys: ${vlessConfig?.keys.toList()}');
-          if (vlessConfig != null) {
-            final isValid = VlessSingboxConverter.isValid(vlessConfig);
-            print('[VLESS] isValid: $isValid');
-            if (!isValid) {
-              print('[VLESS] Config invalid, missing required fields');
-            }
-          }
-          if (vlessConfig != null &&
-              VlessSingboxConverter.isValid(vlessConfig)) {
-            try {
-              print('[VLESS] Converting to singbox JSON...');
-              final singboxJson = VlessSingboxConverter.toSingboxJson(vlessConfig);
-              print('[VLESS] Starting SingboxVpn...');
-              final ok = await SingboxVpn.start(singboxJson);
-              print('[VLESS] SingboxVpn.start() returned: $ok');
-              if (ok) {
-                _usingSingbox = true;
-                _finishConnect();
-                return;
-              }
-              print('[VLESS] SingboxVpn.start() failed — fallback to Trojan');
-            } catch (e) {
-              print('[VLESS] convert/start error: $e — fallback to Trojan');
-            }
-          } else {
-            print('[VLESS] Skipping VLESS — config null or invalid');
+
+          print('[JUGGLER] trojanConfig present: ${trojanConfig != null}');
+          print('[JUGGLER] vlessConfig present: ${vlessConfig != null}');
+          
+          if (trojanConfig != null) {
+            print('[JUGGLER] 🔍 Trojan isValid: ${TrojanSingboxConverter.isValid(trojanConfig)}');
+            print('[JUGGLER] 🔍 Trojan fields: password=${trojanConfig['password'] != null}, address=${trojanConfig['address'] != null}, port=${trojanConfig['port'] != null}');
           }
 
-          // Trojan-second: fallback
-          final trojanConfig = activeConfig['trojan_config'] as Map<String, dynamic>?;
-          print('[TROJAN] trojanConfig present: ${trojanConfig != null}, keys: ${trojanConfig?.keys.toList()}');
-          if (trojanConfig != null) {
-            final isValid = TrojanSingboxConverter.isValid(trojanConfig);
-            print('[TROJAN] isValid: $isValid');
-          }
-          if (trojanConfig != null &&
-              TrojanSingboxConverter.isValid(trojanConfig)) {
+          // Собираем конфиги для Protocol Juggler
+          final configs = <ProtocolType, String>{};
+
+          if (trojanConfig != null && TrojanSingboxConverter.isValid(trojanConfig)) {
             try {
-              print('[TROJAN] Converting to singbox JSON...');
-              final singboxJson = TrojanSingboxConverter.toSingboxJson(trojanConfig);
-              print('[TROJAN] Starting SingboxVpn...');
-              final ok = await SingboxVpn.start(singboxJson);
-              print('[TROJAN] SingboxVpn.start() returned: $ok');
-              if (ok) {
-                _usingSingbox = true;
-                _finishConnect();
-                return;
-              }
-              print('[TROJAN] SingboxVpn.start() failed — fallback to AWG');
+              configs[ProtocolType.trojan] = TrojanSingboxConverter.toSingboxJson(trojanConfig);
             } catch (e) {
-              print('[TROJAN] convert/start error: $e — fallback to AWG');
+              print('[JUGGLER] Trojan conversion error: $e');
+            }
+          }
+
+          if (vlessConfig != null && VlessSingboxConverter.isValid(vlessConfig)) {
+            try {
+              configs[ProtocolType.vless] = VlessSingboxConverter.toSingboxJson(vlessConfig);
+            } catch (e) {
+              print('[JUGGLER] VLESS conversion error: $e');
+            }
+          }
+
+          if (configs.isNotEmpty) {
+            final result = await ProtocolJuggler.connectWithFailover(
+              configs: configs,
+              startVpn: (config) async => await SingboxVpn.start(config),
+              stopVpn: () async => await SingboxVpn.stop(),
+              checkHealth: () async => await HealthChecker.checkHealth(),
+            );
+
+            if (result.connected) {
+              print('[JUGGLER] ✅ Connected via ${result.protocol}');
+              _usingSingbox = true;
+              _finishConnect();
+              return;
+            } else {
+              // Protocol Juggler failed — не продолжаем в WireGuard fallback
+              print('[JUGGLER] ❌ All protocols failed, not falling back to WireGuard');
+              _status = VpnStatus.error;
+              _error = 'All VPN protocols blocked. Try changing server or network.';
+              notifyListeners();
+              return;
             }
           } else {
-            print('[TROJAN] Skipping Trojan — config null or invalid');
+            print('[JUGGLER] No valid configs for Trojan/VLESS');
           }
         }
       } catch (_) {

@@ -100,7 +100,13 @@ class SingboxProxyService : Service() {
     }
 
     private fun stopProxy() {
-        singboxProc?.destroy()
+        singboxProc?.let { proc ->
+            proc.destroy()
+            if (!proc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                proc.destroyForcibly()
+                Log.w(TAG, "Force killed sing-box process")
+            }
+        }
         singboxProc = null
         isRunning = false
         Log.i(TAG, "Proxy stopped")

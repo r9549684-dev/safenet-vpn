@@ -200,8 +200,25 @@ class SingboxVpnService : VpnService() {
 
     private fun stopAll() {
         isRunning = false
-        tun2socksProc?.destroy(); tun2socksProc = null
-        singboxProc?.destroy();   singboxProc   = null
+        // Принудительное завершение процессов (Go runtime не отвечает на мягкий destroy)
+        tun2socksProc?.let { proc ->
+            proc.destroy()
+            if (!proc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                proc.destroyForcibly()
+                Log.w(TAG, "Force killed tun2socks process")
+            }
+        }
+        tun2socksProc = null
+        
+        singboxProc?.let { proc ->
+            proc.destroy()
+            if (!proc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                proc.destroyForcibly()
+                Log.w(TAG, "Force killed sing-box process")
+            }
+        }
+        singboxProc = null
+        
         try { dupTunFd?.close() } catch (_: Exception) {}; dupTunFd = null
         try { tunFd?.close()    } catch (_: Exception) {}; tunFd    = null
         Log.i(TAG, "Stopped")
